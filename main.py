@@ -1,5 +1,5 @@
 from typing import Type
-from bfs import breadth_first_search
+from bfs import breadth_first_search, a_star_search
 from test_tube import TestTube, TUBE_LENGTH, move_allowed, show_tubes_up
 from colors import to_colored_ball
 import time
@@ -25,7 +25,8 @@ def generate_level(hard_mode=True):
   ]
 
 def solver_solve(test_tubes):
-  path = breadth_first_search(test_tubes)
+  #path = breadth_first_search(test_tubes)
+  path = a_star_search(test_tubes)
   for step in path:
     time.sleep(.3)
     show_tubes_up(step, False)
@@ -49,7 +50,7 @@ def player_solve(test_tubes):
 def main():
   test_tubes = generate_level()
   solver_solve(test_tubes)
-  # player_solve(test_tubes)
+  #player_solve(test_tubes)
 
 if __name__ == '__main__':
   main()

@@ -76,7 +76,41 @@ class AStarNode(Node):
     return sum([tt.heuristic() for tt in self.test_tubes])
 
 
+
 def breadth_first_search(head: list[TestTube]) -> list[Node]:
+  # create explored set, priority queue, and final path
+  explored = set()
+  priority = Priority([Node(head)])
+  path = []
+  # goal is a flag we use to see if we've found our goal
+  goal = None
+  # use breadth first search until we find our goal state
+  while not goal:
+    if priority.is_empty():
+      print("I think I've gotten an impossible input.")
+    # exploring is the node whose children we're checking, priority is
+    # ranked based on __lt__ method in Node class
+    exploring = priority.pop()
+    # add this node to set of explored states if it hasn't been explored
+    if exploring not in explored:
+      # print(len(explored))
+      # show_tubes_up(exploring.test_tubes, False)
+      explored.add(exploring)
+      if exploring.is_winner():
+        goal = exploring
+        break
+      for child in exploring.children():
+        if child not in explored:
+          priority.push(child)
+  print("Total nodes explored BFS: {}".format(len(explored)))
+  while goal:
+    path.append(goal.test_tubes)
+    goal = goal.parent
+
+  return path[::-1]
+
+  
+def a_star_search(head: list[TestTube]) -> list[Node]:
   # create explored set, priority queue, and final path
   explored = set()
   priority = Priority([AStarNode(head)])
@@ -101,7 +135,7 @@ def breadth_first_search(head: list[TestTube]) -> list[Node]:
       for child in exploring.children():
         if child not in explored:
           priority.push(child)
-  print("Total nodes explored: {}".format(len(explored)))
+  print("Total nodes explored AStar: {}".format(len(explored)))
   while goal:
     path.append(goal.test_tubes)
     goal = goal.parent
