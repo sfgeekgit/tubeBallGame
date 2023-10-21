@@ -129,4 +129,4 @@ def show_tubes_up(test_tubes, clear=True):
       ret = ret + ' |   ' 
     ret = ret + "\n"  
   ret = ret + bottom + "\n" + ids
-  print (ret)%                                                           
+  print (ret)
