@@ -17,6 +17,7 @@ COLOR_LIGHT_WHITE = "\033[1;37m"
 COLOR_END = "\033[0m"
 
 COLOR_MAP = {
+    0: COLOR_DARK_GRAY,  # maybe it is a good idea to have zero?
     1: COLOR_RED,
     2: COLOR_GREEN,
     3: COLOR_BLUE,
