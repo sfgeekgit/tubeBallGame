@@ -1,4 +1,6 @@
-from test_tube import TestTube, TUBE_LENGTH, move_allowed, show_tubes_up
+from test_tube import TestTube, TUBE_LENGTH, move_allowed, show_tubes_up    # , *
+
+from bfs import a_star_search
 import random
 import os
 
@@ -14,6 +16,7 @@ class GameLevel:
                 self.tubes.append(TestTube(tube))
             else:
                 raise ValueError("Invalid input: must be a TestTube, an empty list, or a list of ints")
+
 
     def get_tubes(self):
         return self.tubes
@@ -36,6 +39,8 @@ class GameLevel:
             f.write(content)
         return new_file_name
 
+    def load_lvl(self, level):
+        self.__init__(level)
     
     def load_from_disk(self, filename, dir_path='./lvls/'):
         file_path = dir_path + filename
@@ -70,32 +75,45 @@ class GameLevel:
 
     
 
+    def load_level_rand(self, num_colors=4, num_tubes=6):
+        lvl = self.gen_level_rand(num_colors, num_tubes)
+        self.load_lvl(lvl)
+        
+
+    def gen_level_rand(self, num_colors=4, num_tubes=6, allow_impossible=False):
+        # As this stands now:
+        # -- This fills the leftmost tubes and leaves the rest to the right empty
+        #   (which could potentially be a limit to the "training data" as real world problems could conceivably not be like this)
+
+        if num_tubes <= num_colors:
+            raise Exception("Num tubes must be more than num colors")
+
+        out = False
+        while not out:
+            all_balls = []
+            for i in range(num_colors):
+                for j in range(TUBE_LENGTH):
+                    all_balls.append(i+1) # no zero
+            random.shuffle(all_balls)
+
+            tube_list = [all_balls[i:i + TUBE_LENGTH] for i in range(0, len(all_balls), TUBE_LENGTH)]
+            for k in range(num_tubes - num_colors):
+                tube_list.append([])
 
 
-def gen_level_rand(num_colors, num_tubes):
-    # As this stands now:
-    # -- Some random boards will be un-solvable!
-    # -- This fills the leftmost tubes and leaves the rest to the right empty
-    #   (which could potentially be a limit to the "training data" as real world problems could conceivably not be like this)
+            out = []
+            for tt in tube_list:
+                out.append(TestTube(tt))
 
-    if num_tubes <= num_colors:
-        raise Exception("Num tubes must be more than num colors")
+            solution = a_star_search(out)
+            # solution will be False if there is none, list of path if it is possible
+            
+            if solution or allow_impossible:
+                return out                
+            else:
+                out = False # loop again!
+                
 
-    all_balls = []
-    for i in range(num_colors):
-        for j in range(TUBE_LENGTH):
-            all_balls.append(i+1) # no zero
-    random.shuffle(all_balls)
-
-    tube_list = [all_balls[i:i + TUBE_LENGTH] for i in range(0, len(all_balls), TUBE_LENGTH)]
-    for k in range(num_tubes - num_colors):
-        tube_list.append([])
-
-    out = []
-    for tt in tube_list:
-        out.append(TestTube(tt))
-
-    return out
         
               
 def gen_solved_level(num_colors, num_tubes):
@@ -115,4 +133,3 @@ def gen_solved_level(num_colors, num_tubes):
         out.append(TestTube([]))
 
     return out
-

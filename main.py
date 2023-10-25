@@ -18,10 +18,11 @@ def generate_level(hard_mode=True):
 def solver_solve(test_tubes):
   #path = breadth_first_search(test_tubes)
   path = a_star_search(test_tubes)
-  for step in path:
-    time.sleep(.1)
-    show_tubes_up(step, False)
-  print("\nSteps to solve:", len(path))
+  if (path):
+    for step in path:
+      time.sleep(.1)
+      show_tubes_up(step, False)
+    print("\nSteps to solve:", len(path))
 
 def player_solve(test_tubes):
   while not all(tt.is_complete() or tt.is_empty() for tt in test_tubes):
@@ -39,10 +40,16 @@ def player_solve(test_tubes):
   print("congrats!!! you won the game!!!")
 
 def main():
-  test_tubes = generate_level(True)
-  #level = level_gen.GameLevel()
+  #test_tubes = generate_level(True)
+
+  level = level_gen.GameLevel()
+  level.load_level_rand(4,6)
+  #print("level" , level)
+  
+  #quit()
+  
   #level.load_demo_hard()
-  #test_tubes = level.get_tubes()
+  test_tubes = level.get_tubes()
   solver_solve(test_tubes)
   #player_solve(test_tubes)
 

@@ -120,7 +120,8 @@ def a_star_search(head: list[TestTube]) -> list[Node]:
   # use breadth first search until we find our goal state
   while not goal:
     if priority.is_empty():
-      print("I think I've gotten an impossible input.")
+      print("I think I've gotten an impossible input. A star not havin this.")
+      return False
     # exploring is the node whose children we're checking, priority is
     # ranked based on __lt__ method in Node class
     exploring = priority.pop()
