@@ -2,28 +2,18 @@ from typing import Type
 from bfs import breadth_first_search, a_star_search
 from test_tube import TestTube, TUBE_LENGTH, move_allowed, show_tubes_up
 from colors import to_colored_ball
-#from level_gen import gen_level_rand
 import time
-
+import level_gen
 
 def generate_level(hard_mode=True):
-  return [
-      TestTube([1, 2, 3, 4]),
-      TestTube([5, 5, 6, 5]),
-      TestTube([1, 2, 7, 2]),
-      TestTube([7, 4, 5, 6]),
-      TestTube([4, 4, 3, 2]),
-#      TestTube([3,2,4, 4]), # Not orignial
-      TestTube([6, 1, 1, 3]),
-      TestTube([3, 7, 7, 6]),
-      TestTube([]),
-      TestTube([])
-  ] if hard_mode else [
-      TestTube([1, 1, 2, 1]),
-      TestTube([2, 1, 2]),
-      TestTube([2]),
-      TestTube()
-  ]
+  level = level_gen.GameLevel()
+  if hard_mode:
+    level.load_demo_hard()
+  else:
+    level.load_demo_easy()
+  return level.get_tubes()
+
+
 
 def solver_solve(test_tubes):
   #path = breadth_first_search(test_tubes)
@@ -49,9 +39,10 @@ def player_solve(test_tubes):
   print("congrats!!! you won the game!!!")
 
 def main():
-  test_tubes = generate_level()
-#  test_tubes = gen_level_rand(4,6) # sometimes make impossible puzzles
-#  show_tubes_up(test_tubes, False)
+  test_tubes = generate_level(True)
+  #level = level_gen.GameLevel()
+  #level.load_demo_hard()
+  #test_tubes = level.get_tubes()
   solver_solve(test_tubes)
   #player_solve(test_tubes)
 
