@@ -5,6 +5,9 @@ from colors import to_colored_ball
 import time
 import level_gen
 
+
+SLEEP_TIME=0.2
+
 def generate_level(hard_mode=True):
   level = level_gen.GameLevel()
   if hard_mode:
@@ -20,7 +23,7 @@ def solver_solve(test_tubes):
   path = a_star_search(test_tubes)
   if (path):
     for step in path:
-      time.sleep(.1)
+      time.sleep(SLEEP_TIME)
       show_tubes_up(step, False)
     print("\nSteps to solve:", len(path))
 
@@ -43,6 +46,18 @@ def main():
   #test_tubes = generate_level(True)
 
   level = level_gen.GameLevel()
+
+  '''
+  global SLEEP_TIME
+  SLEEP_TIME=0
+  for i in range(1,4): # 501
+    f = str(i) + '.lvl'
+    level.load_from_disk(f)    
+    test_tubes = level.get_tubes()
+    solver_solve(test_tubes)
+  quit()
+  '''
+
   level.load_level_rand(4,6)
   #print("level" , level)
   
@@ -50,6 +65,13 @@ def main():
   
   #level.load_demo_hard()
   test_tubes = level.get_tubes()
+
+  #net_input = level_gen.tubes_to_input(test_tubes)
+  #print("net input", net_input)
+  #print(test_tubes)
+  #quit()
+
+  
   solver_solve(test_tubes)
   #player_solve(test_tubes)
 

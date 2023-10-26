@@ -114,7 +114,27 @@ class GameLevel:
                 out = False # loop again!
                 
 
-        
+
+
+def tubes_to_input(tubes, max_tubes=7):
+    # given a list of tubes, turn it into a list of floats to feed into a neural net.
+    # if the # of tubes is less than the max, fill out with 9's
+    if len(tubes) > max_tubes:
+        print ("turning too many tubes into an input")
+        return
+    out = []
+    for tube in tubes:
+        tu = tube.contents
+        for ball in tu:
+            out.append(float(ball))
+        for _ in range(TUBE_LENGTH - len(tu)):
+            out.append(0.)
+    for _ in range(max_tubes - len(tubes)):
+        for __ in range(TUBE_LENGTH):
+            out.append(9.)
+    return out            
+
+    
               
 def gen_solved_level(num_colors, num_tubes):
     if num_tubes < num_colors:
