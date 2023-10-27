@@ -58,7 +58,8 @@ def main():
   quit()
   '''
 
-  level.load_level_rand(4,6)
+  level.load_demo_easy()
+  #level.load_level_rand(4,6)
   #print("level" , level)
   
   #quit()
@@ -66,8 +67,8 @@ def main():
   #level.load_demo_hard()
   test_tubes = level.get_tubes()
 
-  #net_input = level_gen.tubes_to_input(test_tubes)
-  #print("net input", net_input)
+  net_input = level_gen.tubes_to_input(test_tubes)
+  print("net input", net_input)
   #print(test_tubes)
   #quit()
 
