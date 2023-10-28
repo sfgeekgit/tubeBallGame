@@ -66,7 +66,34 @@ def reward_f (state, move):   # stat is list of tubes, move is tuple {to, from}
     reward['invalid_move']    = -3
     reward['winning_move']    = 10
     reward['meh']             =  0
-    return 0
+
+    test_tubes = state
+    move_from  = move[0]
+    move_to    = move[1]
+    show_tubes_up(test_tubes, False)
+    print("from to", move_from, move_to)
+
+    
+    if move_from == move_to:
+        print ("no way")
+        return reward['invalid_move']
+
+    allowed, _ = move_allowed(test_tubes, move_from, move_to)
+    print("allowed?", allowed)
+    if not allowed:
+        return reward['invalid_move']
+    
+    #if allowed:
+    new_tubes = [tt.copy() for tt in test_tubes]
+    new_tubes[move_to].add_ball(new_tubes[move_from].pop_top())
+    print("new tubes")
+    show_tubes_up(new_tubes, False)    
+    if all(tt.is_complete() or tt.is_empty() for tt in test_tubes):
+        print ("Winning state!")
+        return reward['winning_move']
+        
+    
+    return reward['meh']
     
 
 level = level_gen.GameLevel()
@@ -88,7 +115,7 @@ logits = logits.view(2,4)
 to_from = logits.argmax(1).tolist()
 #print(to_from)
 
-
+reward_f(test_tubes, to_from)
 
 # move from is first half of logits,  NUM_TUBES, 
 # move to   is next  half of logits,  NUM_TUBES, 
