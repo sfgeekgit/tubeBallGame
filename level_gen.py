@@ -57,7 +57,16 @@ class GameLevel:
             TestTube()
         ]
         self.__init__(tubes)
-        
+
+    def load_demo_one_move(self):
+        tubes = [
+            TestTube([1, 1, 1, 1]),
+            TestTube([2, 2, 2]),
+            TestTube([2]),
+            TestTube()
+        ]
+        self.__init__(tubes)
+
 
     def load_demo_hard(self):
         tubes = [
