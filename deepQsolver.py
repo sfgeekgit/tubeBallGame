@@ -3,9 +3,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 import random
 
-## Currently VERY MUCH a work in progress....
-
-
 from typing import Type
 from bfs import breadth_first_search, a_star_search
 from test_tube import TestTube, TUBE_LENGTH, move_allowed, show_tubes_up
@@ -14,6 +11,7 @@ import time
 import level_gen
 
 
+# work in progress
 
 
 NUM_TUBES  = 4
@@ -29,6 +27,8 @@ OUTPUT_SIZE = NUM_TUBES * 2   # ball from and ball to
 DECAY = 0.95
 LEARNING_RATE = 1e-3
 
+
+NUM_EPOCHS = 5000
 
 
 def tube_list_to_tensor(tubes):
@@ -69,7 +69,7 @@ class NeuralNetwork(nn.Module):
 
 
 
-
+#####    reward    =   reward_f(test_tubes, rand_to_from)  
 def reward_f (state, move):   # stat is list of tubes, move is tuple {to, from}  # todo, is this wrong?? {from, to} maybe?
     #print(f"{move=}")
     #if (move == (2,1)):
@@ -82,8 +82,14 @@ def reward_f (state, move):   # stat is list of tubes, move is tuple {to, from} 
     reward['meh']             =  0
 
     test_tubes = state
-    move_from  = move[0]
-    move_to    = move[1]
+
+    #move_from  = move[0]
+    #move_to    = move[1]
+
+    move_to    = move[0]
+    move_from  = move[1]
+
+
     #show_tubes_up(test_tubes, False)
     #print("from to", move_from, move_to)
 
@@ -104,8 +110,8 @@ def reward_f (state, move):   # stat is list of tubes, move is tuple {to, from} 
     #show_tubes_up(new_tubes, False)
     
     # to do!!! bug??? This winning is never called??
-    if all(tt.is_complete() or tt.is_empty() for tt in test_tubes):
-        print ("Winning state!")
+    if all(tt.is_complete() or tt.is_empty() for tt in new_tubes):
+        #print ("Winning state!")
         return reward['winning_move']
     
     
@@ -151,8 +157,10 @@ optimizer = torch.optim.AdamW(mynet.parameters(), lr=LEARNING_RATE)
 #######
 loss_rec = []
 
-for stepnum in range(1500):
+for stepnum in range(NUM_EPOCHS):
 
+    #print("\n\n\n\n\n\n--\n\nstepnum" , stepnum)
+    
     logits = mynet(T)  # that calls forward because __call__ is coded magic backend
     #print("logits" , logits)
     logits = logits.view(2,4)
@@ -167,12 +175,12 @@ for stepnum in range(1500):
 
 	
     # these are the values we are randomly checking with bellman
-    r1 = random_int = random.randint(0, 3)
-    r2 = random_int = random.randint(0, 3)
+    rfrom = random_int = random.randint(0, 3)
+    rto = random_int = random.randint(0, 3)
 
 
-    rand_from = torch.tensor(r1)  # do move, and compute right side
-    rand_to   = torch.tensor(r2)  # do move, and compute right side
+    rand_from = torch.tensor(rfrom)  # do move, and compute right side
+    rand_to   = torch.tensor(rto)  # do move, and compute right side
     
     one_hots = torch.stack((F.one_hot(rand_to, NUM_TUBES), F.one_hot(rand_from, NUM_TUBES)))
     
@@ -188,7 +196,7 @@ for stepnum in range(1500):
     bellman_left = logits.sum()
     #print(f"{bellman_left=}")
     
-    rand_to_from = (r2, r1)
+    rand_to_from = (rto, rfrom)
     
     reward    =   reward_f(test_tubes, rand_to_from)  
 
@@ -225,6 +233,11 @@ for stepnum in range(1500):
 
     if stepnum %100==0:
         print(stepnum , loss.item())
+
+    if stepnum > (NUM_EPOCHS - 100) and stepnum %5==0:
+        print(stepnum , loss.item())
+
+        
         
 
     #if loss.item() >= 50 and stepnum > 40:
@@ -234,15 +247,24 @@ for stepnum in range(1500):
 
 #print(f"{loss_rec}")
 
-
+'''
 for idx, val in enumerate(loss_rec):
-    #if val > 50:
-    if (idx%100==0):
+    if val > 20 or  (idx%100==0):
         print(idx, val)
-        
+'''
 
-    
 
+
+
+print("\n\n--\nNow run it again and see what it does\n")
+
+net_input = level_gen.tubes_to_list(test_tubes)  # net_input is the state # todo, move this inside the loop
+
+show_tubes_up(test_tubes, False)
+T = tube_list_to_tensor(net_input)
+
+
+  
 logits = mynet(T)  # that calls forward because __call__ is coded magic backend
 #print("logits" , logits)
 logits = logits.view(2,4)
@@ -251,6 +273,7 @@ to_from = logits.argmax(1).tolist()  # do this after training
 
 print(f"{logits=}")
 print(f"{to_from=}")
+
 
 quit()
 
