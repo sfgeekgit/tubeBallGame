@@ -69,13 +69,16 @@ class GameLevel:
         ]
         self.__init__(tubes)
 
-    def load_demo_one_move_rand(self):
+    def load_demo_one_move_rand(self, num_tubes):        
         tubes = [
             TestTube([1, 1, 1, 1]),
             TestTube([2, 2, 2]),
-            TestTube([2]),
-            TestTube()
+            TestTube([2])
+            
         ]
+        for _ in range(num_tubes - len(tubes)):
+            tubes.append(TestTube())
+        
         shuffle(tubes)
         self.__init__(tubes)
 

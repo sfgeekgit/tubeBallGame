@@ -16,6 +16,9 @@ import level_gen
 # this seems to work, gets the right answer consictantly with only 5000 epochs
 # and yet! The loss function never calms down, even after 2,000,000 epochs loss still bounce from .01 to over 50! (but almost always gives correct answer
 # maybe need to use batches??
+
+
+
 '''
 1998500 0.043226148933172226
 1998600 9.225915908813477
@@ -58,7 +61,10 @@ import level_gen
 
 
 
+
+
 NUM_TUBES  = 4
+#NUM_TUBES  = 5
 NUM_COLORS = 2
 
 INPUT_SIZE = ( NUM_COLORS +1 ) * NUM_TUBES * TUBE_LENGTH
@@ -71,8 +77,8 @@ OUTPUT_SIZE = NUM_TUBES * 2   # ball to and ball from
 DECAY = 0.95
 LEARNING_RATE = 1e-3
 
-
 NUM_EPOCHS = 5000
+#NUM_EPOCHS = 25000
 
 
 
@@ -185,12 +191,12 @@ level = level_gen.GameLevel()
 for stepnum in range(NUM_EPOCHS):
     
 
-    level.load_demo_one_move_rand()
+    level.load_demo_one_move_rand(NUM_TUBES)
     test_tubes = level.get_tubes()
     #show_tubes_up(test_tubes, False)
 
 
-    net_input = level_gen.tubes_to_list(test_tubes)  # net_input is the state 
+    net_input = level_gen.tubes_to_list(test_tubes, NUM_TUBES)  # net_input is the state    
     T = tube_list_to_tensor(net_input)
 
 
@@ -199,7 +205,7 @@ for stepnum in range(NUM_EPOCHS):
     
     logits = mynet(T)  # that calls forward because __call__ is coded magic backend
     #print("logits" , logits)
-    logits = logits.view(2,4)
+    logits = logits.view(2,NUM_TUBES)
     #print("logits" , logits)
     if stepnum % 800 == 0:
         to_from = logits.argmax(1).tolist()  # do this after training
@@ -248,11 +254,11 @@ for stepnum in range(NUM_EPOCHS):
 
         
     new_state = next_state(test_tubes, rand_to_from)    
-    right_input = level_gen.tubes_to_list(new_state)
+    right_input = level_gen.tubes_to_list(new_state, NUM_TUBES)
     T = tube_list_to_tensor(right_input)
     right_logits = mynet(T) 
 
-    right_logits = right_logits.view(2,4)
+    right_logits = right_logits.view(2,NUM_TUBES)
     #print(f"{right_logits=}")
     right_logits = right_logits.max(dim=1).values
     #print(f"{right_logits=}")
@@ -281,7 +287,7 @@ for stepnum in range(NUM_EPOCHS):
 
 print("\n\n--\nNow run it again and see what it does\n")
 
-net_input = level_gen.tubes_to_list(test_tubes)  
+net_input = level_gen.tubes_to_list(test_tubes, NUM_TUBES)  
 show_tubes_up(test_tubes, False)
 T = tube_list_to_tensor(net_input)
 
@@ -289,7 +295,7 @@ T = tube_list_to_tensor(net_input)
   
 logits = mynet(T)  # that calls forward because __call__ is coded magic backend
 #print("logits" , logits)
-logits = logits.view(2,4)
+logits = logits.view(2,NUM_TUBES)
 #print("logits" , logits)
 to_from = logits.argmax(1).tolist()  # do this after training
 
