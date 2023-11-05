@@ -1,4 +1,5 @@
 from test_tube import TestTube, TUBE_LENGTH, move_allowed, show_tubes_up    # , *
+from random import shuffle
 
 from bfs import a_star_search
 import random
@@ -58,6 +59,7 @@ class GameLevel:
         ]
         self.__init__(tubes)
 
+
     def load_demo_one_move(self):
         tubes = [
             TestTube([1, 1, 1, 1]),
@@ -65,6 +67,16 @@ class GameLevel:
             TestTube([2]),
             TestTube()
         ]
+        self.__init__(tubes)
+
+    def load_demo_one_move_rand(self):
+        tubes = [
+            TestTube([1, 1, 1, 1]),
+            TestTube([2, 2, 2]),
+            TestTube([2]),
+            TestTube()
+        ]
+        shuffle(tubes)
         self.__init__(tubes)
 
 

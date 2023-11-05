@@ -12,6 +12,50 @@ import level_gen
 
 
 # work in progress
+# currently uses random levels which are all solvalbe in 1 move (but different moves) to train.
+# this seems to work, gets the right answer consictantly with only 5000 epochs
+# and yet! The loss function never calms down, even after 2,000,000 epochs loss still bounce from .01 to over 50! (but almost always gives correct answer
+# maybe need to use batches??
+'''
+1998500 0.043226148933172226
+1998600 9.225915908813477
+1998700 0.40944910049438477
+1998800 0.15998385846614838
+1998900 0.08823530375957489
+1999000 51.801387786865234
+1999100 0.031094990670681
+[0, 1]
+|⬤ |   |  |   |⬤ |   |  |   
+|⬤ |   |  |   |⬤ |   |  |   
+|⬤ |   |  |   |⬤ |   |  |   
+|⬤ |   |  |   |⬤ |   |  |   
+----   ----   ----   ----   
+  0      1      2      3    
+1999200 3.072566032409668
+1999300 50.71949768066406
+1999400 22.60091209411621
+1999500 0.0008819153881631792
+1999600 1.2797266244888306
+1999700 5.592416286468506
+1999800 17.334171295166016
+1999900 3.9418537616729736
+[3, 0]
+|  |   |⬤ |   |  |   |⬤ |   
+|  |   |⬤ |   |  |   |⬤ |   
+|  |   |⬤ |   |  |   |⬤ |   
+|  |   |⬤ |   |  |   |⬤ |   
+----   ----   ----   ----   
+  0      1      2      3    
+2000000 2.6680748462677
+2000100 1.0805448293685913
+2000200 6.131015777587891
+2000300 3.8627755641937256
+2000400 4.138742446899414
+2000500 0.9869991540908813
+2000600 0.6377352476119995
+2000700 0.08145025372505188
+'''
+
 
 
 NUM_TUBES  = 4
@@ -22,13 +66,14 @@ INPUT_SIZE = ( NUM_COLORS +1 ) * NUM_TUBES * TUBE_LENGTH
 HIDDEN_SIZE = INPUT_SIZE  # why not...
 
 
-OUTPUT_SIZE = NUM_TUBES * 2   # ball from and ball to
+OUTPUT_SIZE = NUM_TUBES * 2   # ball to and ball from
 
 DECAY = 0.95
 LEARNING_RATE = 1e-3
 
 
 NUM_EPOCHS = 5000
+
 
 
 def tube_list_to_tensor(tubes):
@@ -43,7 +88,6 @@ def tube_list_to_tensor(tubes):
         t_input.extend(dic[ball])
 
     T = torch.tensor(t_input)
-    #print(T)
     return T.float()
 
 
@@ -69,12 +113,8 @@ class NeuralNetwork(nn.Module):
 
 
 
-#####    reward    =   reward_f(test_tubes, rand_to_from)  
-def reward_f (state, move):   # stat is list of tubes, move is tuple {to, from}  # todo, is this wrong?? {from, to} maybe?
-    #print(f"{move=}")
-    #if (move == (2,1)):
-    #    print ("hard coded win!")
-    #    return 10
+
+def reward_f (state, move):   # state is list of tubes, move is tuple {to, from} 
     
     reward = {}
     reward['invalid_move']    = -3
@@ -82,10 +122,6 @@ def reward_f (state, move):   # stat is list of tubes, move is tuple {to, from} 
     reward['meh']             =  0
 
     test_tubes = state
-
-    #move_from  = move[0]
-    #move_to    = move[1]
-
     move_to    = move[0]
     move_from  = move[1]
 
@@ -109,20 +145,18 @@ def reward_f (state, move):   # stat is list of tubes, move is tuple {to, from} 
     #print("new tubes")
     #show_tubes_up(new_tubes, False)
     
-    # to do!!! bug??? This winning is never called??
+
     if all(tt.is_complete() or tt.is_empty() for tt in new_tubes):
         #print ("Winning state!")
         return reward['winning_move']
-    
-    
-
+        
     return reward['meh']
 
 
-def next_state(state, move):
+def next_state(state, move):  # move is to,from
     test_tubes = state
-    move_from  = move[0]
-    move_to    = move[1]
+    move_to    = move[0]
+    move_from  = move[1]
 
     if move_from == move_to:
         return state
@@ -137,41 +171,46 @@ def next_state(state, move):
 
     
 
-level = level_gen.GameLevel()
-
-level.load_demo_easy()
-level.load_demo_one_move()
-
-test_tubes = level.get_tubes()
-
-
-
-net_input = level_gen.tubes_to_list(test_tubes)  # net_input is the state # todo, move this inside the loop
-T = tube_list_to_tensor(net_input)
-
 
 mynet  = NeuralNetwork()
 optimizer = torch.optim.AdamW(mynet.parameters(), lr=LEARNING_RATE)
-
-
-#######
 loss_rec = []
 
-for stepnum in range(NUM_EPOCHS):
 
-    #print("\n\n\n\n\n\n--\n\nstepnum" , stepnum)
+level = level_gen.GameLevel()
+#level.load_demo_easy()
+#level.load_demo_one_move()
+
+
+for stepnum in range(NUM_EPOCHS):
+    
+
+    level.load_demo_one_move_rand()
+    test_tubes = level.get_tubes()
+    #show_tubes_up(test_tubes, False)
+
+
+    net_input = level_gen.tubes_to_list(test_tubes)  # net_input is the state 
+    T = tube_list_to_tensor(net_input)
+
+
+
+    
     
     logits = mynet(T)  # that calls forward because __call__ is coded magic backend
     #print("logits" , logits)
     logits = logits.view(2,4)
     #print("logits" , logits)
-    #to_from = logits.argmax(1).tolist()  # do this after training
-    ### print(to_from)
+    if stepnum % 800 == 0:
+        to_from = logits.argmax(1).tolist()  # do this after training
+        print(to_from)
+        new_state = next_state(test_tubes, to_from)    
+        show_tubes_up(new_state, False)
 
-    # Note .. will these be off by one??  Game expects 1-4 (does it?)  but this is 0-3 
 
-    # move from is first half of logits,  NUM_TUBES, 
-    # move to   is next  half of logits,  NUM_TUBES, 
+    # move to   is first half of logits,  NUM_TUBES, 
+    # move from is other half of logits,  NUM_TUBES, 
+
 
 	
     # these are the values we are randomly checking with bellman
@@ -197,19 +236,18 @@ for stepnum in range(NUM_EPOCHS):
     #print(f"{bellman_left=}")
     
     rand_to_from = (rto, rfrom)
-    
     reward    =   reward_f(test_tubes, rand_to_from)  
 
 
-
+    # have we reached a terminal state?
     if reward == 0:
-        keep_playing = torch.tensor(1)
+        keep_playing = torch.tensor(1)   # keep playing
     else:
-        keep_playing = torch.tensor(0)
+        keep_playing = torch.tensor(0)   # terminal state, zero out the right logits, only use the reward
     
 
         
-    new_state = next_state(test_tubes, rand_to_from)
+    new_state = next_state(test_tubes, rand_to_from)    
     right_input = level_gen.tubes_to_list(new_state)
     T = tube_list_to_tensor(right_input)
     right_logits = mynet(T) 
@@ -234,32 +272,16 @@ for stepnum in range(NUM_EPOCHS):
     if stepnum %100==0:
         print(stepnum , loss.item())
 
-    if stepnum > (NUM_EPOCHS - 100) and stepnum %5==0:
+    if stepnum >= (NUM_EPOCHS - 50) and stepnum %10==0:
         print(stepnum , loss.item())
 
         
         
 
-    #if loss.item() >= 50 and stepnum > 40:
-    #    print ("huge loss, exit", loss.item)
-    #    quit()
-
-
-#print(f"{loss_rec}")
-
-'''
-for idx, val in enumerate(loss_rec):
-    if val > 20 or  (idx%100==0):
-        print(idx, val)
-'''
-
-
-
 
 print("\n\n--\nNow run it again and see what it does\n")
 
-net_input = level_gen.tubes_to_list(test_tubes)  # net_input is the state # todo, move this inside the loop
-
+net_input = level_gen.tubes_to_list(test_tubes)  
 show_tubes_up(test_tubes, False)
 T = tube_list_to_tensor(net_input)
 
@@ -271,38 +293,19 @@ logits = logits.view(2,4)
 #print("logits" , logits)
 to_from = logits.argmax(1).tolist()  # do this after training
 
+
+new_state = next_state(test_tubes, to_from)    
+show_tubes_up(new_state, False)
+
 print(f"{logits=}")
 print(f"{to_from=}")
+
 
 
 quit()
 
 
 
-
-
-
-
-
-
-
-
-
-
-#bellman_right
-
-'''
-
-From maze, if the next move is a "terminal" state then only use the reward, nuke the rest
-Terminal can be win OR lose.
-terminal is either zero or one
-
-
-        TERMINAL = torch.tensor(terminal).to(device).view(-1, 1)
-        bellman_left = (model(XS) * MS).sum(dim=1, keepdim=True)
-        qqs = model(YS).max(dim=1, keepdim=True).values
-        bellman_right = RS + qqs * TERMINAL * GAMMA_DECAY
-'''
 
 # run network with this state, get back 8 values
 # split into 2x4
