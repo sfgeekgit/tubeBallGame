@@ -2,14 +2,12 @@ import torch
 import torch.nn as nn 
 import torch.nn.functional as F
 import random
-
 from typing import Type
 from bfs import breadth_first_search, a_star_search
 from test_tube import TestTube, TUBE_LENGTH, move_allowed, show_tubes_up
 from colors import to_colored_ball
 import time
 import level_gen
-
 
 # work in progress
 # currently uses random levels which are all solvalbe in 1 move (but different moves) to train.
@@ -19,68 +17,31 @@ import level_gen
 
 
 
-'''
-1998500 0.043226148933172226
-1998600 9.225915908813477
-1998700 0.40944910049438477
-1998800 0.15998385846614838
-1998900 0.08823530375957489
-1999000 51.801387786865234
-1999100 0.031094990670681
-[0, 1]
-|⬤ |   |  |   |⬤ |   |  |   
-|⬤ |   |  |   |⬤ |   |  |   
-|⬤ |   |  |   |⬤ |   |  |   
-|⬤ |   |  |   |⬤ |   |  |   
-----   ----   ----   ----   
-  0      1      2      3    
-1999200 3.072566032409668
-1999300 50.71949768066406
-1999400 22.60091209411621
-1999500 0.0008819153881631792
-1999600 1.2797266244888306
-1999700 5.592416286468506
-1999800 17.334171295166016
-1999900 3.9418537616729736
-[3, 0]
-|  |   |⬤ |   |  |   |⬤ |   
-|  |   |⬤ |   |  |   |⬤ |   
-|  |   |⬤ |   |  |   |⬤ |   
-|  |   |⬤ |   |  |   |⬤ |   
-----   ----   ----   ----   
-  0      1      2      3    
-2000000 2.6680748462677
-2000100 1.0805448293685913
-2000200 6.131015777587891
-2000300 3.8627755641937256
-2000400 4.138742446899414
-2000500 0.9869991540908813
-2000600 0.6377352476119995
-2000700 0.08145025372505188
-'''
-
-
-
-
-
 NUM_TUBES  = 4
-NUM_TUBES  = 5
+#NUM_TUBES  = 5
 NUM_COLORS = 2
 
 INPUT_SIZE = ( NUM_COLORS +1 ) * NUM_TUBES * TUBE_LENGTH
 
 HIDDEN_SIZE = INPUT_SIZE  # why not...
 
+SQUARED_OUTPUT = False
 
-OUTPUT_SIZE = NUM_TUBES * 2   # ball to and ball from
+if SQUARED_OUTPUT:
+    # get ONE output, take the to and from (so 7 tubes would need 49 outputs)
+    OUTPUT_SIZE = NUM_TUBES * NUM_TUBES   # 
+
+else:
+    # get TWO outputs, take the to from first half and from from next half(so 7 tubes would need 14 outputs)
+    OUTPUT_SIZE = NUM_TUBES * 2   # ball to and ball from
 
 DECAY = 0.95
 
 LEARNING_RATE = 1e-3
-#LEARNING_RATE = 1e-5
+#LEARNING_RATE = 1e-4
 
+NUM_EPOCHS = 5000
 NUM_EPOCHS = 15000
-#NUM_EPOCHS = 8050000
 
 
 
@@ -194,8 +155,6 @@ level = level_gen.GameLevel()
 
 
 for stepnum in range(NUM_EPOCHS):
-    
-
     level.load_demo_one_move_rand(NUM_TUBES)
     test_tubes = level.get_tubes()
     #show_tubes_up(test_tubes, False)
@@ -210,31 +169,52 @@ for stepnum in range(NUM_EPOCHS):
     
     logits = mynet(T)  # that calls forward because __call__ is coded magic backend
     #print("logits" , logits)
-    logits = logits.view(2,NUM_TUBES)
+
+
+    if SQUARED_OUTPUT:
+        pass
+    else:
+        logits = logits.view(2,NUM_TUBES)
     #print("logits" , logits)
     if stepnum % 800 == 0:
-        to_from = logits.argmax(1).tolist()  # do this after training
-        print(to_from)
+        if SQUARED_OUTPUT:
+            to_from_logs = logits.argmax()  # do this after training
+            move_to = to_from_logs // NUM_TUBES
+            move_from = to_from_logs - move_to * NUM_TUBES
+            to_from = [move_to, move_from]
+        else:
+            to_from = logits.argmax(1).tolist()  # do this after training
+
+        #print(f"{to_from=}")
         new_state = next_state(test_tubes, to_from)    
         show_tubes_up(new_state, False)
 
 
     # move to   is first half of logits,  NUM_TUBES, 
     # move from is other half of logits,  NUM_TUBES, 
+    ################
 
+    #print(f"{logits=}")
+    
 
 	
     # these are the values we are randomly checking with bellman
-    rfrom = random_int = random.randint(0, 3)
-    rto = random_int = random.randint(0, 3)
+    rfrom = random_int = random.randint(0, NUM_TUBES-1)
+    rto = random_int = random.randint(0, NUM_TUBES-1)
 
 
     rand_from = torch.tensor(rfrom)  # do move, and compute right side
     rand_to   = torch.tensor(rto)  # do move, and compute right side
+
+
+    if SQUARED_OUTPUT:
+        pass
+        #to_from_sq = rto
+        #one_hots = 
+    else:
+        one_hots = torch.stack((F.one_hot(rand_to, NUM_TUBES), F.one_hot(rand_from, NUM_TUBES)))
     
-    one_hots = torch.stack((F.one_hot(rand_to, NUM_TUBES), F.one_hot(rand_from, NUM_TUBES)))
-    
-	
+    #print(f"{one_hots=}")
     logits = logits * one_hots
 	
 	
