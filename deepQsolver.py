@@ -64,7 +64,7 @@ import level_gen
 
 
 NUM_TUBES  = 4
-#NUM_TUBES  = 5
+NUM_TUBES  = 5
 NUM_COLORS = 2
 
 INPUT_SIZE = ( NUM_COLORS +1 ) * NUM_TUBES * TUBE_LENGTH
@@ -75,10 +75,12 @@ HIDDEN_SIZE = INPUT_SIZE  # why not...
 OUTPUT_SIZE = NUM_TUBES * 2   # ball to and ball from
 
 DECAY = 0.95
-LEARNING_RATE = 1e-3
 
-NUM_EPOCHS = 5000
-#NUM_EPOCHS = 25000
+LEARNING_RATE = 1e-3
+#LEARNING_RATE = 1e-5
+
+NUM_EPOCHS = 15000
+#NUM_EPOCHS = 8050000
 
 
 
@@ -105,11 +107,14 @@ class NeuralNetwork(nn.Module):
 
     def __init__(self):
         super().__init__()
+        
         self.linear_relu_stack = nn.Sequential(
             nn.Linear(INPUT_SIZE, HIDDEN_SIZE),
             nn.ReLU(),
             nn.Linear(HIDDEN_SIZE, HIDDEN_SIZE),
             nn.ReLU(),
+            #nn.Linear(HIDDEN_SIZE//2, HIDDEN_SIZE),
+            #nn.ReLU(),
             nn.Linear(HIDDEN_SIZE, OUTPUT_SIZE),
         )
 
@@ -281,8 +286,12 @@ for stepnum in range(NUM_EPOCHS):
     if stepnum >= (NUM_EPOCHS - 50) and stepnum %10==0:
         print(stepnum , loss.item())
 
-        
-        
+
+avg_last = 500
+#print("len rec" , len(loss_rec))
+average_loss_end = sum(loss_rec[-avg_last:]) / avg_last
+print(f"{average_loss_end=}")
+
 
 
 print("\n\n--\nNow run it again and see what it does\n")
@@ -306,9 +315,6 @@ show_tubes_up(new_state, False)
 print(f"{logits=}")
 print(f"{to_from=}")
 
-
-
-quit()
 
 
 
