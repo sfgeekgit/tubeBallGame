@@ -254,6 +254,13 @@ for stepnum in range(NUM_EPOCHS):
     all_next_states = [next_state(test_tubes, move) for move in all_moves]
     all_rewards = [reward_f(test_tubes, move) for move in all_moves]
 
+    #for foo in all_next_states:
+    #    print(f"{foo=}")
+    #    show_tubes_up(foo, False)
+
+    #print(f"{len(all_next_states)=}")
+    #print(f"{len(all_rewards)=}")
+
     #print(f"{all_next_states=}") 
     #print(f"{all_rewards=}") 
     '''
