@@ -9,6 +9,11 @@ from colors import to_colored_ball
 import time
 import level_gen
 
+
+
+
+
+
 # work in progress
 # currently uses random levels which are all solvalbe in 1 move (but different moves) to train.
 # this seems to work, gets the right answer consictantly with only 5000 epochs
@@ -20,6 +25,11 @@ import level_gen
 NUM_TUBES  = 4
 #NUM_TUBES  = 5
 NUM_COLORS = 2
+
+
+
+
+
 
 INPUT_SIZE = ( NUM_COLORS +1 ) * NUM_TUBES * TUBE_LENGTH
 
@@ -40,8 +50,11 @@ DECAY = 0.95
 LEARNING_RATE = 1e-3
 #LEARNING_RATE = 1e-4
 
-NUM_EPOCHS = 5000
-NUM_EPOCHS = 15000
+
+
+NUM_EPOCHS = 5000  
+NUM_EPOCHS = 10
+
 
 
 
@@ -208,26 +221,57 @@ for stepnum in range(NUM_EPOCHS):
 
 
     if SQUARED_OUTPUT:
-        pass
-        #to_from_sq = rto
-        #one_hots = 
+        to_from_sq = rto * NUM_TUBES + rfrom
+        one_hots = F.one_hot(torch.tensor(to_from_sq), NUM_TUBES * NUM_TUBES)
+        logits = logits * one_hots
+
+        
     else:
         one_hots = torch.stack((F.one_hot(rand_to, NUM_TUBES), F.one_hot(rand_from, NUM_TUBES)))
-    
-    #print(f"{one_hots=}")
-    logits = logits * one_hots
-	
-	
-
-    logits = logits.sum(1)   # This is the left bellman!!  (need to turn this into one number, sum them or whatever)
+        logits = logits * one_hots	
+        logits = logits.sum(1)   # This is the left bellman!!  (need to turn this into one number, sum them or whatever)
     # question, what is the best way to combine the 2 numbers (to and from) into 1 number for loss function. Start with just a sum, will work well enough, but maybe get something better. Whatever it is, needs to be used consistantly.
     #print(f"{logits=}")
 
+
+    
     bellman_left = logits.sum()
     #print(f"{bellman_left=}")
-    
+
+    # test one random
     rand_to_from = (rto, rfrom)
     reward    =   reward_f(test_tubes, rand_to_from)  
+
+
+    # or test all as batch (WIP)
+    all_moves = []
+    for j in range(NUM_TUBES):
+        for k in range(NUM_TUBES):
+            all_moves.append((j,k))
+
+
+    # Calculate the next state and the reward for each move
+    all_next_states = [next_state(test_tubes, move) for move in all_moves]
+    all_rewards = [reward_f(test_tubes, move) for move in all_moves]
+
+    #print(f"{all_next_states=}") 
+    #print(f"{all_rewards=}") 
+    '''
+# Convert the list of states into a tensor
+all_next_states_tensor = torch.stack([tube_list_to_tensor(level_gen.tubes_to_list(state, NUM_TUBES)) for state in all_next_states])
+
+# Pass the batch tensor through your network
+all_logits = mynet(all_next_states_tensor)
+
+# Calculate the loss for all moves
+# ... (you need to modify your loss calculation code to handle batch inputs)
+    '''
+
+
+
+
+
+
 
 
     # have we reached a terminal state?
@@ -243,17 +287,39 @@ for stepnum in range(NUM_EPOCHS):
     T = tube_list_to_tensor(right_input)
     right_logits = mynet(T) 
 
-    right_logits = right_logits.view(2,NUM_TUBES)
-    #print(f"{right_logits=}")
-    right_logits = right_logits.max(dim=1).values
-    #print(f"{right_logits=}")
+
+    if SQUARED_OUTPUT:
+        right_logits = right_logits.max(dim=0).values
+    else:
+        right_logits = right_logits.view(2,NUM_TUBES)
+        #print(f"{right_logits=}")
+        right_logits = right_logits.max(dim=1).values
+        #print(f"{right_logits=}")
+        #right_logits_max = right_logits.max(dim=1).values
+        #print(f"{right_logits_max=}")
+
+        
+    bellman_right = reward + keep_playing * DECAY * right_logits.sum()   # should this be right_logits max??
+    # for right_logits, this is using the highest value (the highest confidence) but should be the position of that???
     
-    bellman_right = reward + keep_playing * DECAY * right_logits.sum()
     #print(f"{bellman_left=}")
     #print(f"{bellman_right=}")
     
 
-    loss = F.mse_loss(bellman_left, bellman_right)
+    # MSE    
+    #loss = F.mse_loss(bellman_left, bellman_right)
+
+    #  Huber Loss
+    loss_function = nn.SmoothL1Loss()
+    loss = loss_function(bellman_left, bellman_right)
+
+    #Mean Absolute Error (MAE)
+    #loss_function = nn.L1Loss()
+    #loss = loss_function(bellman_left, bellman_right)
+
+
+
+
     #print(f"{loss=}")
     loss_rec.append(loss.item())
     optimizer.zero_grad()
@@ -284,9 +350,20 @@ T = tube_list_to_tensor(net_input)
   
 logits = mynet(T)  # that calls forward because __call__ is coded magic backend
 #print("logits" , logits)
-logits = logits.view(2,NUM_TUBES)
-#print("logits" , logits)
-to_from = logits.argmax(1).tolist()  # do this after training
+
+if SQUARED_OUTPUT:
+    logits = logits.max(dim=0).values
+    # and...
+    print(f"{logits=}")
+    print("feeee")
+    quit()
+   
+    to_from_sq = rto * NUM_TUBES + rfrom
+    
+else:
+    logits = logits.view(2,NUM_TUBES)
+
+    to_from = logits.argmax(1).tolist()  # do this after training
 
 
 new_state = next_state(test_tubes, to_from)    
