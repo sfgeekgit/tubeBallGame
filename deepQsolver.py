@@ -53,7 +53,7 @@ LEARNING_RATE = 1e-3
 
 
 NUM_EPOCHS = 5000  
-NUM_EPOCHS = 10
+NUM_EPOCHS = 12000
 
 
 
@@ -263,6 +263,43 @@ for stepnum in range(NUM_EPOCHS):
 
     #print(f"{all_next_states=}") 
     #print(f"{all_rewards=}") 
+    all_next_states_tensor = torch.stack([tube_list_to_tensor(level_gen.tubes_to_list(state, NUM_TUBES)) for state in all_next_states])
+    #print(f"{all_next_states_tensor=}")
+
+    all_logits = mynet(all_next_states_tensor)
+
+    all_next_q_values = mynet(all_next_states_tensor)
+
+    # Calculate the maximum Q-value for each next state
+    if SQUARED_OUTPUT:
+        all_next_max_q_values = all_next_q_values.max(dim=1).values
+    else:
+        all_next_max_q_values = all_next_q_values.view(-1, 2, NUM_TUBES).max(dim=2).values
+
+
+
+
+    # Calculate the target Q-values for the Bellman equation
+    all_rewards_tensor = torch.tensor(all_rewards)
+    keep_playing_tensor = (all_rewards_tensor == 0).float()
+    all_bellman_targets = all_rewards_tensor + keep_playing_tensor * DECAY * all_next_max_q_values.sum(dim=1)
+    
+    # Calculate the predicted Q-values for the moves that were actually taken
+    all_moves_tensor = torch.tensor(all_moves)
+    if SQUARED_OUTPUT:
+        all_predicted_q_values = all_logits.gather(1, all_moves_tensor.prod(dim=1).view(-1, 1)).squeeze()
+    else:
+        all_predicted_q_values = all_logits.view(-1, 2, NUM_TUBES).gather(2, all_moves_tensor.view(-1, 2, 1)).sum(dim=1)
+        
+    # Calculate the loss
+    loss_function = nn.SmoothL1Loss()
+    loss = loss_function(all_predicted_q_values, all_bellman_targets)
+
+
+
+
+
+
     '''
 # Convert the list of states into a tensor
 all_next_states_tensor = torch.stack([tube_list_to_tensor(level_gen.tubes_to_list(state, NUM_TUBES)) for state in all_next_states])
@@ -274,12 +311,8 @@ all_logits = mynet(all_next_states_tensor)
 # ... (you need to modify your loss calculation code to handle batch inputs)
     '''
 
-
-
-
-
-
-
+    '''
+    # Non-batched
 
     # have we reached a terminal state?
     if reward == 0:
@@ -323,7 +356,7 @@ all_logits = mynet(all_next_states_tensor)
     #Mean Absolute Error (MAE)
     #loss_function = nn.L1Loss()
     #loss = loss_function(bellman_left, bellman_right)
-
+    '''
 
 
 
@@ -340,7 +373,7 @@ all_logits = mynet(all_next_states_tensor)
         print(stepnum , loss.item())
 
 
-avg_last = 500
+avg_last = 50
 #print("len rec" , len(loss_rec))
 average_loss_end = sum(loss_rec[-avg_last:]) / avg_last
 print(f"{average_loss_end=}")
