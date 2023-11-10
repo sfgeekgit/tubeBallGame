@@ -9,13 +9,17 @@ from colors import to_colored_ball
 import time
 import level_gen
 
-DECAY = 0.95
+#DECAY = 0.95
+DECAY = 0.6
+# interesting. Training this on puzzles that can be sloved in one move was not learning with a decay=.95 I think because the next move would still be so close to a win. Similar for training on puzzles solveable in 1 or 2 moves. But lowering the decay rate for these easy puzzles seems to have worked!
+
 
 LEARNING_RATE = 1e-3
 #LEARNING_RATE = 1e-4
 
-NUM_EPOCHS = 5000  
-#NUM_EPOCHS = 95000
+NUM_EPOCHS =     5000  
+NUM_EPOCHS =  2150000
+
 
 NUM_TUBES  = 4
 #NUM_TUBES  = 5
@@ -112,7 +116,7 @@ def reward_f (state, move):   # state is list of tubes, move is tuple {to, from}
     move_to    = move[0]
     move_from  = move[1]
 
-
+    #print("\n\n--\n\n")
     #show_tubes_up(test_tubes, False)
     #print("from to", move_from, move_to)
 
@@ -136,7 +140,8 @@ def reward_f (state, move):   # state is list of tubes, move is tuple {to, from}
     if all(tt.is_complete() or tt.is_empty() for tt in new_tubes):
         #print ("Winning state!")
         return reward['winning_move']
-        
+
+    #print("meh")
     return reward['meh']
 
 
@@ -261,20 +266,23 @@ for stepnum in range(NUM_EPOCHS):
             move_from = to_from_logs - move_to * NUM_TUBES
             to_from = [move_to, move_from]
 
-            if stepnum % 3 == 0:
-               print("non-rand shenangans!")
-               rfrom = move_from
-               rto   = move_to
+            #if stepnum % 3 == 0:
+            #   print("non-rand shenangans!")
+            #   rfrom = move_from
+            #   rto   = move_to
 
 
 
         else:
             to_from = logits.argmax(1).tolist()  # do this after training
 
+        
+        show_tubes_up(test_tubes, False)
         print(f"{to_from=}")
         new_state = next_state(test_tubes, to_from)    
         show_tubes_up(new_state, False)
-
+        print("\n\n")
+        
 
     # move to   is first half of logits,  NUM_TUBES, 
     # move from is other half of logits,  NUM_TUBES, 
@@ -313,7 +321,11 @@ for stepnum in range(NUM_EPOCHS):
     rand_to_from = (rto, rfrom)
     reward    =   reward_f(test_tubes, rand_to_from)  
 
+    ## THIS REWARD IS WRONG?????
 
+
+
+    '''
     if stepnum % 999800 == 0:
         print(f"{rand_to=}")
         print(f"{rand_from=}")
@@ -322,7 +334,7 @@ for stepnum in range(NUM_EPOCHS):
         print(f"{logits=}")
         print(f"{reward=}")
         print(f"{bellman_left=}")
-
+    '''
 
 
     if EXHAUSTIVE:
@@ -355,7 +367,8 @@ for stepnum in range(NUM_EPOCHS):
         
         bellman_right = reward + keep_playing * DECAY * right_logits.sum()   # should this be right_logits max??
         # for right_logits, this is using the highest value (the highest confidence) but should be the position of that???
-    
+
+        '''
         if stepnum % 800 == 0:
             print(f"{bellman_left=}")
             print(f"{bellman_right=}")
@@ -364,7 +377,8 @@ for stepnum in range(NUM_EPOCHS):
             print(f"{right_logits=}")
             print(f"{right_logits.sum()=}")
             print(f"{DECAY=}")
-    
+        '''
+        
 
         # MSE    
         loss = F.mse_loss(bellman_left, bellman_right)

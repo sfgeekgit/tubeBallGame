@@ -69,12 +69,14 @@ class GameLevel:
         ]
         self.__init__(tubes)
 
-    def load_demo_one_move_rand(self, num_tubes):        
+    def load_demo_one_move_rand(self, num_tubes):
+        coin = random.randint(0,1)
+        x = coin +1 
+        y = (coin +1) % 2 +1        
         tubes = [
-            TestTube([1, 1, 1, 1]),
-            TestTube([2, 2, 2]),
-            TestTube([2])
-            
+            TestTube([x, x, x, x]),
+            TestTube([y, y, y]),
+            TestTube([y])            
         ]
         for _ in range(num_tubes - len(tubes)):
             tubes.append(TestTube())
@@ -82,11 +84,17 @@ class GameLevel:
         shuffle(tubes)
         self.__init__(tubes)
 
-    def load_demo_two_move_rand(self, num_tubes):        
+    def load_demo_two_move_rand(self, num_tubes):
+        coin = random.randint(0,1)
+        x = coin +1 
+        y = (coin +1) % 2 +1
+        coin2 = random.randint(0,1)
+        x2 = coin2 +1 
+        y2 = (coin2 +1) % 2 +1
         tubes = [
-            TestTube([1, 1, 1]),
-            TestTube([2, 2, 2]),
-            TestTube([1,2])            
+            TestTube([x, x, x]),
+            TestTube([y, y, y]),
+            TestTube([x2,y2])
         ]
         for _ in range(num_tubes - len(tubes)):
             tubes.append(TestTube())
@@ -97,26 +105,12 @@ class GameLevel:
 
     def load_demo_one_or_two_move_rand(self, num_tubes):
         # not super random, not exhausitve
-        coin = random.randint(1,2)
-        if coin == 1:
-            tubes = [
-                TestTube([1, 1, 1]),
-                TestTube([2, 2, 2]),
-                TestTube([1,2])            
-            ]
+        coin = random.randint(0,1)
+        if coin == 0:
+            self.load_demo_one_move_rand(num_tubes)
         else:
-            tubes = [
-                TestTube([1, 1, 1, 1]),
-                TestTube([2, 2, 2]),
-                TestTube([2])            
-            ]
-
-        for _ in range(num_tubes - len(tubes)):
-            tubes.append(TestTube())
+            self.load_demo_two_move_rand(num_tubes)
         
-        shuffle(tubes)
-        self.__init__(tubes)
-
     def load_demo_hard(self):
         tubes = [
             TestTube([1, 2, 3, 4]),
@@ -214,4 +208,5 @@ def gen_solved_level(num_colors, num_tubes):
     return out
 
 #level = GameLevel()
+#level.load_demo_one_or_two_move_rand(4)
 #level.load_demo_one_or_two_move_rand(5)
