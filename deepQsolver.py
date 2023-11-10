@@ -15,7 +15,7 @@ LEARNING_RATE = 1e-3
 #LEARNING_RATE = 1e-4
 
 NUM_EPOCHS = 5000  
-NUM_EPOCHS = 2000
+#NUM_EPOCHS = 95000
 
 NUM_TUBES  = 4
 #NUM_TUBES  = 5
@@ -42,9 +42,10 @@ and the single biggest logit will be taken as the answer. For example if the lar
 '''
 
 
-EXHAUSTIVE = True
+EXHAUSTIVE = False
 
-SQUARED_OUTPUT = False
+#SQUARED_OUTPUT = False
+SQUARED_OUTPUT = True
 
 if SQUARED_OUTPUT:
     # get ONE output, take the to and from (so 7 tubes would need 49 outputs)
@@ -224,7 +225,8 @@ level = level_gen.GameLevel()
 
 
 for stepnum in range(NUM_EPOCHS):
-    level.load_demo_one_move_rand(NUM_TUBES)
+    #level.load_demo_one_move_rand(NUM_TUBES)
+    level.load_demo_one_or_two_move_rand(NUM_TUBES)
     test_tubes = level.get_tubes()
     #show_tubes_up(test_tubes, False)
 
@@ -244,16 +246,32 @@ for stepnum in range(NUM_EPOCHS):
     #print("logits" , logits)
 
 
+    # these are the values we are randomly checking with bellman
+    rfrom = random_int = random.randint(0, NUM_TUBES-1)
+    rto = random_int = random.randint(0, NUM_TUBES-1)
+
+
+
+
     if stepnum % 800 == 0:
+        print(f"{logits=}")
         if SQUARED_OUTPUT:
             to_from_logs = logits.argmax()  # do this after training
             move_to = to_from_logs // NUM_TUBES
             move_from = to_from_logs - move_to * NUM_TUBES
             to_from = [move_to, move_from]
+
+            if stepnum % 3 == 0:
+               print("non-rand shenangans!")
+               rfrom = move_from
+               rto   = move_to
+
+
+
         else:
             to_from = logits.argmax(1).tolist()  # do this after training
 
-        #print(f"{to_from=}")
+        print(f"{to_from=}")
         new_state = next_state(test_tubes, to_from)    
         show_tubes_up(new_state, False)
 
@@ -266,10 +284,6 @@ for stepnum in range(NUM_EPOCHS):
     
 
 	
-    # these are the values we are randomly checking with bellman
-    rfrom = random_int = random.randint(0, NUM_TUBES-1)
-    rto = random_int = random.randint(0, NUM_TUBES-1)
-
 
     rand_from = torch.tensor(rfrom)  # do move, and compute right side
     rand_to   = torch.tensor(rto)  # do move, and compute right side
@@ -289,6 +303,8 @@ for stepnum in range(NUM_EPOCHS):
     #print(f"{logits=}")
 
 
+
+
     
     bellman_left = logits.sum()
     #print(f"{bellman_left=}")
@@ -296,6 +312,17 @@ for stepnum in range(NUM_EPOCHS):
     # test one random
     rand_to_from = (rto, rfrom)
     reward    =   reward_f(test_tubes, rand_to_from)  
+
+
+    if stepnum % 999800 == 0:
+        print(f"{rand_to=}")
+        print(f"{rand_from=}")
+        print(f"{rand_to_from=}")
+        print(f"{one_hots=}")
+        print(f"{logits=}")
+        print(f"{reward=}")
+        print(f"{bellman_left=}")
+
 
 
     if EXHAUSTIVE:
@@ -329,16 +356,22 @@ for stepnum in range(NUM_EPOCHS):
         bellman_right = reward + keep_playing * DECAY * right_logits.sum()   # should this be right_logits max??
         # for right_logits, this is using the highest value (the highest confidence) but should be the position of that???
     
-        #print(f"{bellman_left=}")
-        #print(f"{bellman_right=}")
+        if stepnum % 800 == 0:
+            print(f"{bellman_left=}")
+            print(f"{bellman_right=}")
+            print(f"{reward=}")
+            print(f"{keep_playing=}")
+            print(f"{right_logits=}")
+            print(f"{right_logits.sum()=}")
+            print(f"{DECAY=}")
     
 
         # MSE    
-        #loss = F.mse_loss(bellman_left, bellman_right)
+        loss = F.mse_loss(bellman_left, bellman_right)
 
         #  Huber Loss
-        loss_function = nn.SmoothL1Loss()
-        loss = loss_function(bellman_left, bellman_right)
+        #loss_function = nn.SmoothL1Loss()
+        #loss = loss_function(bellman_left, bellman_right)
 
         #Mean Absolute Error (MAE)
         #loss_function = nn.L1Loss()
@@ -358,7 +391,7 @@ for stepnum in range(NUM_EPOCHS):
         print(stepnum , loss.item())
 
 
-avg_last = 50
+avg_last = 500
 #print("len rec" , len(loss_rec))
 average_loss_end = sum(loss_rec[-avg_last:]) / avg_last
 print(f"{average_loss_end=}")
@@ -377,13 +410,16 @@ logits = mynet(T)  # that calls forward because __call__ is coded magic backend
 #print("logits" , logits)
 
 if SQUARED_OUTPUT:
-    logits = logits.max(dim=0).values
-    # and...
     print(f"{logits=}")
-    print("feeee")
-    quit()
-   
-    to_from_sq = rto * NUM_TUBES + rfrom
+    logits_mv = logits.max(dim=0).values
+    print(f"{logits_mv=}")
+    to_from_logs = logits.argmax()  # do this after training
+    print(f"{to_from_logs=}")
+    move_to = to_from_logs // NUM_TUBES
+    move_from = to_from_logs - move_to * NUM_TUBES
+    to_from = [move_to, move_from]
+    print(f"{to_from=}")
+    print("feeeeee")
     
 else:
     logits = logits.view(2,NUM_TUBES)

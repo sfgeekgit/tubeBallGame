@@ -82,6 +82,40 @@ class GameLevel:
         shuffle(tubes)
         self.__init__(tubes)
 
+    def load_demo_two_move_rand(self, num_tubes):        
+        tubes = [
+            TestTube([1, 1, 1]),
+            TestTube([2, 2, 2]),
+            TestTube([1,2])            
+        ]
+        for _ in range(num_tubes - len(tubes)):
+            tubes.append(TestTube())
+        
+        shuffle(tubes)
+        self.__init__(tubes)
+
+
+    def load_demo_one_or_two_move_rand(self, num_tubes):
+        # not super random, not exhausitve
+        coin = random.randint(1,2)
+        if coin == 1:
+            tubes = [
+                TestTube([1, 1, 1]),
+                TestTube([2, 2, 2]),
+                TestTube([1,2])            
+            ]
+        else:
+            tubes = [
+                TestTube([1, 1, 1, 1]),
+                TestTube([2, 2, 2]),
+                TestTube([2])            
+            ]
+
+        for _ in range(num_tubes - len(tubes)):
+            tubes.append(TestTube())
+        
+        shuffle(tubes)
+        self.__init__(tubes)
 
     def load_demo_hard(self):
         tubes = [
@@ -178,3 +212,7 @@ def gen_solved_level(num_colors, num_tubes):
         out.append(TestTube([]))
 
     return out
+
+level = GameLevel()
+
+level.load_demo_one_or_two_move_rand(5)
