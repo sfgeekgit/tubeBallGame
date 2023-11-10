@@ -9,31 +9,40 @@ from colors import to_colored_ball
 import time
 import level_gen
 
+DECAY = 0.95
 
+LEARNING_RATE = 1e-3
+#LEARNING_RATE = 1e-4
 
-
-
-
-# work in progress
-# currently uses random levels which are all solvalbe in 1 move (but different moves) to train.
-# this seems to work, gets the right answer consictantly with only 5000 epochs
-# and yet! The loss function never calms down, even after 2,000,000 epochs loss still bounce from .01 to over 50! (but almost always gives correct answer
-# maybe need to use batches??
-
-
+NUM_EPOCHS = 5000  
+NUM_EPOCHS = 2000
 
 NUM_TUBES  = 4
 #NUM_TUBES  = 5
 NUM_COLORS = 2
 
 
-
-
-
-
 INPUT_SIZE = ( NUM_COLORS +1 ) * NUM_TUBES * TUBE_LENGTH
-
 HIDDEN_SIZE = INPUT_SIZE  # why not...
+
+'''
+Plays the tube ball game. 
+Every step of the game needs two values.
+-- What tube to move from
+-- What tube to move to
+
+This code has two differnt settings for how to build the neural network output.
+If SQUARED_OUTPUT == False then the final output layer of the network will an
+output size of  NUM_TUBES * 2 
+this output will be split in half. The largest logit from the first half will be move_to and the largest logit of the second half will be move_from
+
+But if SQUARED_OUTPUT == True, then the final output layer will be of 
+size NUM_TUBES * NUM_TUBES
+and the single biggest logit will be taken as the answer. For example if the largest logit is 0, then to_from will be assumed to be (0,0) and if the network outputs a 1, then to_from will be (0,1) etc
+'''
+
+
+EXHAUSTIVE = True
 
 SQUARED_OUTPUT = False
 
@@ -45,15 +54,7 @@ else:
     # get TWO outputs, take the to from first half and from from next half(so 7 tubes would need 14 outputs)
     OUTPUT_SIZE = NUM_TUBES * 2   # ball to and ball from
 
-DECAY = 0.95
 
-LEARNING_RATE = 1e-3
-#LEARNING_RATE = 1e-4
-
-
-
-NUM_EPOCHS = 5000  
-NUM_EPOCHS = 12000
 
 
 
@@ -155,6 +156,61 @@ def next_state(state, move):  # move is to,from
     return new_tubes
 
     
+def exhaustive_search():
+    all_moves = []
+    for j in range(NUM_TUBES):
+        for k in range(NUM_TUBES):
+            all_moves.append((j,k))
+
+
+    # Calculate the next state and the reward for each move
+    all_next_states = [next_state(test_tubes, move) for move in all_moves]
+    all_rewards = [reward_f(test_tubes, move) for move in all_moves]
+
+    #for foo in all_next_states:
+    #    print(f"{foo=}")
+    #    show_tubes_up(foo, False)
+
+    #print(f"{len(all_next_states)=}")
+    #print(f"{len(all_rewards)=}")
+
+    #print(f"{all_next_states=}") 
+    #print(f"{all_rewards=}") 
+    all_next_states_tensor = torch.stack([tube_list_to_tensor(level_gen.tubes_to_list(state, NUM_TUBES)) for state in all_next_states])
+    #print(f"{all_next_states_tensor=}")
+
+    all_logits = mynet(all_next_states_tensor)
+
+    all_next_q_values = mynet(all_next_states_tensor)
+
+    # Calculate the maximum Q-value for each next state
+    if SQUARED_OUTPUT:
+        all_next_max_q_values = all_next_q_values.max(dim=1).values
+    else:
+        all_next_max_q_values = all_next_q_values.view(-1, 2, NUM_TUBES).max(dim=2).values
+
+
+
+
+    # Calculate the target Q-values for the Bellman equation
+    all_rewards_tensor = torch.tensor(all_rewards)
+    keep_playing_tensor = (all_rewards_tensor == 0).float()
+    all_bellman_targets = all_rewards_tensor + keep_playing_tensor * DECAY * all_next_max_q_values.sum(dim=1)
+    
+    # Calculate the predicted Q-values for the moves that were actually taken
+    all_moves_tensor = torch.tensor(all_moves)
+    if SQUARED_OUTPUT:
+        all_predicted_q_values = all_logits.gather(1, all_moves_tensor.prod(dim=1).view(-1, 1)).squeeze()
+    else:
+        all_predicted_q_values = all_logits.view(-1, 2, NUM_TUBES).gather(2, all_moves_tensor.view(-1, 2, 1)).sum(dim=1)
+        
+    # Calculate the loss
+    loss_function = nn.SmoothL1Loss()
+    loss = loss_function(all_predicted_q_values, all_bellman_targets)
+    return loss
+
+
+
 
 
 mynet  = NeuralNetwork()
@@ -177,9 +233,6 @@ for stepnum in range(NUM_EPOCHS):
     T = tube_list_to_tensor(net_input)
 
 
-
-    
-    
     logits = mynet(T)  # that calls forward because __call__ is coded magic backend
     #print("logits" , logits)
 
@@ -189,6 +242,8 @@ for stepnum in range(NUM_EPOCHS):
     else:
         logits = logits.view(2,NUM_TUBES)
     #print("logits" , logits)
+
+
     if stepnum % 800 == 0:
         if SQUARED_OUTPUT:
             to_from_logs = logits.argmax()  # do this after training
@@ -243,122 +298,52 @@ for stepnum in range(NUM_EPOCHS):
     reward    =   reward_f(test_tubes, rand_to_from)  
 
 
-    # or test all as batch (WIP)
-    all_moves = []
-    for j in range(NUM_TUBES):
-        for k in range(NUM_TUBES):
-            all_moves.append((j,k))
-
-
-    # Calculate the next state and the reward for each move
-    all_next_states = [next_state(test_tubes, move) for move in all_moves]
-    all_rewards = [reward_f(test_tubes, move) for move in all_moves]
-
-    #for foo in all_next_states:
-    #    print(f"{foo=}")
-    #    show_tubes_up(foo, False)
-
-    #print(f"{len(all_next_states)=}")
-    #print(f"{len(all_rewards)=}")
-
-    #print(f"{all_next_states=}") 
-    #print(f"{all_rewards=}") 
-    all_next_states_tensor = torch.stack([tube_list_to_tensor(level_gen.tubes_to_list(state, NUM_TUBES)) for state in all_next_states])
-    #print(f"{all_next_states_tensor=}")
-
-    all_logits = mynet(all_next_states_tensor)
-
-    all_next_q_values = mynet(all_next_states_tensor)
-
-    # Calculate the maximum Q-value for each next state
-    if SQUARED_OUTPUT:
-        all_next_max_q_values = all_next_q_values.max(dim=1).values
+    if EXHAUSTIVE:
+        loss = exhaustive_search()
     else:
-        all_next_max_q_values = all_next_q_values.view(-1, 2, NUM_TUBES).max(dim=2).values
-
-
-
-
-    # Calculate the target Q-values for the Bellman equation
-    all_rewards_tensor = torch.tensor(all_rewards)
-    keep_playing_tensor = (all_rewards_tensor == 0).float()
-    all_bellman_targets = all_rewards_tensor + keep_playing_tensor * DECAY * all_next_max_q_values.sum(dim=1)
-    
-    # Calculate the predicted Q-values for the moves that were actually taken
-    all_moves_tensor = torch.tensor(all_moves)
-    if SQUARED_OUTPUT:
-        all_predicted_q_values = all_logits.gather(1, all_moves_tensor.prod(dim=1).view(-1, 1)).squeeze()
-    else:
-        all_predicted_q_values = all_logits.view(-1, 2, NUM_TUBES).gather(2, all_moves_tensor.view(-1, 2, 1)).sum(dim=1)
-        
-    # Calculate the loss
-    loss_function = nn.SmoothL1Loss()
-    loss = loss_function(all_predicted_q_values, all_bellman_targets)
-
-
-
-
-
-
-    '''
-# Convert the list of states into a tensor
-all_next_states_tensor = torch.stack([tube_list_to_tensor(level_gen.tubes_to_list(state, NUM_TUBES)) for state in all_next_states])
-
-# Pass the batch tensor through your network
-all_logits = mynet(all_next_states_tensor)
-
-# Calculate the loss for all moves
-# ... (you need to modify your loss calculation code to handle batch inputs)
-    '''
-
-    '''
-    # Non-batched
-
-    # have we reached a terminal state?
-    if reward == 0:
-        keep_playing = torch.tensor(1)   # keep playing
-    else:
-        keep_playing = torch.tensor(0)   # terminal state, zero out the right logits, only use the reward
+        # have we reached a terminal state?
+        if reward == 0:
+            keep_playing = torch.tensor(1)   # keep playing
+        else:
+            keep_playing = torch.tensor(0)   # terminal state, zero out the right logits, only use the reward
     
 
         
-    new_state = next_state(test_tubes, rand_to_from)    
-    right_input = level_gen.tubes_to_list(new_state, NUM_TUBES)
-    T = tube_list_to_tensor(right_input)
-    right_logits = mynet(T) 
+        new_state = next_state(test_tubes, rand_to_from)    
+        right_input = level_gen.tubes_to_list(new_state, NUM_TUBES)
+        T = tube_list_to_tensor(right_input)
+        right_logits = mynet(T) 
 
 
-    if SQUARED_OUTPUT:
-        right_logits = right_logits.max(dim=0).values
-    else:
-        right_logits = right_logits.view(2,NUM_TUBES)
-        #print(f"{right_logits=}")
-        right_logits = right_logits.max(dim=1).values
-        #print(f"{right_logits=}")
-        #right_logits_max = right_logits.max(dim=1).values
-        #print(f"{right_logits_max=}")
+        if SQUARED_OUTPUT:
+            right_logits = right_logits.max(dim=0).values
+        else:
+            right_logits = right_logits.view(2,NUM_TUBES)
+            #print(f"{right_logits=}")
+            right_logits = right_logits.max(dim=1).values
+            #print(f"{right_logits=}")
+            #right_logits_max = right_logits.max(dim=1).values
+            #print(f"{right_logits_max=}")
 
         
-    bellman_right = reward + keep_playing * DECAY * right_logits.sum()   # should this be right_logits max??
-    # for right_logits, this is using the highest value (the highest confidence) but should be the position of that???
+        bellman_right = reward + keep_playing * DECAY * right_logits.sum()   # should this be right_logits max??
+        # for right_logits, this is using the highest value (the highest confidence) but should be the position of that???
     
-    #print(f"{bellman_left=}")
-    #print(f"{bellman_right=}")
+        #print(f"{bellman_left=}")
+        #print(f"{bellman_right=}")
     
 
-    # MSE    
-    #loss = F.mse_loss(bellman_left, bellman_right)
+        # MSE    
+        #loss = F.mse_loss(bellman_left, bellman_right)
 
-    #  Huber Loss
-    loss_function = nn.SmoothL1Loss()
-    loss = loss_function(bellman_left, bellman_right)
+        #  Huber Loss
+        loss_function = nn.SmoothL1Loss()
+        loss = loss_function(bellman_left, bellman_right)
 
-    #Mean Absolute Error (MAE)
-    #loss_function = nn.L1Loss()
-    #loss = loss_function(bellman_left, bellman_right)
-    '''
-
-
+        #Mean Absolute Error (MAE)
+        #loss_function = nn.L1Loss()
+        #loss = loss_function(bellman_left, bellman_right)
+    
 
     #print(f"{loss=}")
     loss_rec.append(loss.item())
