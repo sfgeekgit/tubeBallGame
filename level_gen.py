@@ -213,6 +213,5 @@ def gen_solved_level(num_colors, num_tubes):
 
     return out
 
-level = GameLevel()
-
-level.load_demo_one_or_two_move_rand(5)
+#level = GameLevel()
+#level.load_demo_one_or_two_move_rand(5)
