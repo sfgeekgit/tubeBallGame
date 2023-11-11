@@ -14,12 +14,31 @@ DECAY = 0.6
 # interesting. Training this on puzzles that can be sloved in one move was not learning with a decay=.95 I think because the next move would still be so close to a win. Similar for training on puzzles solveable in 1 or 2 moves. But lowering the decay rate for these easy puzzles seems to have worked!
 
 
+
 LEARNING_RATE = 1e-3
 #LEARNING_RATE = 1e-4
 
-NUM_EPOCHS =     5000  
-NUM_EPOCHS =  2150000
 
+
+NUM_EPOCHS =     5000  
+#NUM_EPOCHS = 4550000
+
+
+'''
+Nice! With 1,550,000 epochs decay=.6  and step down learning rate:
+1549990 2.615379912640492e-07
+average_loss_end=0.00022892226667283922
+
+
+What if there were even more??
+Nice.
+3549990 1.2206539395265281e-05
+average_loss_end=4.849776981134823e-05
+
+Idea -- Auto decriment learning rate. If loss is less than (say) rate/10 for 10-20 epochs in a row, rate = rate/10
+
+
+'''
 
 NUM_TUBES  = 4
 #NUM_TUBES  = 5
@@ -60,8 +79,11 @@ else:
     OUTPUT_SIZE = NUM_TUBES * 2   # ball to and ball from
 
 
+DYN_LEARNING_RATE = True
+STEP_LEARN_RATE   = True
 
 
+    
 
 
 def tube_list_to_tensor(tubes):
@@ -259,6 +281,7 @@ for stepnum in range(NUM_EPOCHS):
 
 
     if stepnum % 800 == 0:
+        print(f"{LEARNING_RATE=}")
         print(f"{logits=}")
         if SQUARED_OUTPUT:
             to_from_logs = logits.argmax()  # do this after training
@@ -401,14 +424,53 @@ for stepnum in range(NUM_EPOCHS):
     if stepnum %100==0:
         print(stepnum , loss.item())
 
-    if stepnum >= (NUM_EPOCHS - 50) and stepnum %10==0:
-        print(stepnum , loss.item())
+        if DYN_LEARNING_RATE:
+            if stepnum > 50:
+                max_rec_loss = max(loss_rec[-8:])
+                median_rec_loss = sorted(loss_rec[-20:])[len(loss_rec[-20:]) // 2]
+                #print(f"{max_rec_loss=}")
+                #print(f"{median_rec_loss=}")
+                if median_rec_loss < LEARNING_RATE * 50 and max_rec_loss < LEARNING_RATE*500:
+                    print(f"{LEARNING_RATE=}")
+                    LEARNING_RATE = LEARNING_RATE / 5
+                    print ("---------------------------------------\nLower Learning Rate \n==================================================================")
+                    print(f"{LEARNING_RATE=}")
 
 
+        
+    if STEP_LEARN_RATE:
+        for l_step in [.9, .95, .99]:
+            if stepnum == NUM_EPOCHS * l_step:
+                print(f"{LEARNING_RATE=}")
+                print ("---------------------------------------\nLower Learning Rate \n==================================================================")
+                LEARNING_RATE = LEARNING_RATE / 10
+                print(f"{LEARNING_RATE=}")
+                optimizer = torch.optim.AdamW(mynet.parameters(), lr=LEARNING_RATE)
+
+                
+                
+                
 avg_last = 500
 #print("len rec" , len(loss_rec))
 average_loss_end = sum(loss_rec[-avg_last:]) / avg_last
+print("avg of last __ steps for end" , avg_last)
 print(f"{average_loss_end=}")
+print(f"{LEARNING_RATE=}")
+
+
+
+
+current_time = time.strftime("%Y-%m-%d-%H:%M:%S")
+log_content = (f"\n\n--------\nFinished run at {current_time}")
+log_content += (f"\n {average_loss_end} average_loss_end")
+log_content += (f"\n {NUM_EPOCHS} NUM_EPOCHS")
+log_content += (f"\n    {SQUARED_OUTPUT=}  Learning rate back off BOTH at 90,95,99% and also dynamic if loss is low enough")
+log_content += (f"  {NUM_EPOCHS=} {DECAY=} . final-{LEARNING_RATE=} ")
+
+
+log_file_path = './run_log.txt'
+with open(log_file_path, 'a') as f:
+    f.write(log_content)
 
 
 
@@ -432,20 +494,18 @@ if SQUARED_OUTPUT:
     move_to = to_from_logs // NUM_TUBES
     move_from = to_from_logs - move_to * NUM_TUBES
     to_from = [move_to, move_from]
-    print(f"{to_from=}")
-    print("feeeeee")
+
+
     
 else:
     logits = logits.view(2,NUM_TUBES)
-
+    print(f"{logits=}")
     to_from = logits.argmax(1).tolist()  # do this after training
 
-
+print(f"{to_from=}")
 new_state = next_state(test_tubes, to_from)    
 show_tubes_up(new_state, False)
 
-print(f"{logits=}")
-print(f"{to_from=}")
 
 
 
