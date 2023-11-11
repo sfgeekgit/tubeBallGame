@@ -20,8 +20,8 @@ LEARNING_RATE = 1e-3
 
 
 
-NUM_EPOCHS =     5000  
-#NUM_EPOCHS = 4550000
+NUM_EPOCHS =    5000  
+NUM_EPOCHS =  150000
 
 
 '''
@@ -80,7 +80,9 @@ else:
 
 
 DYN_LEARNING_RATE = True
-STEP_LEARN_RATE   = True
+
+STEP_LEARN_RATE   = False
+##STEP_LEARN_RATE   = True
 
 
     
@@ -464,8 +466,9 @@ current_time = time.strftime("%Y-%m-%d-%H:%M:%S")
 log_content = (f"\n\n--------\nFinished run at {current_time}")
 log_content += (f"\n {average_loss_end} average_loss_end")
 log_content += (f"\n {NUM_EPOCHS} NUM_EPOCHS")
-log_content += (f"\n    {SQUARED_OUTPUT=}  Learning rate back off BOTH at 90,95,99% and also dynamic if loss is low enough")
-log_content += (f"  {NUM_EPOCHS=} {DECAY=} . final-{LEARNING_RATE=} ")
+log_content += (f"\n    {SQUARED_OUTPUT=}  ")
+log_content += (f"  {NUM_EPOCHS=} {DECAY=} ...  final learn: {LEARNING_RATE=} ")
+log_content += (f"  {DYN_LEARNING_RATE=} {STEP_LEARN_RATE=}")
 
 
 log_file_path = './run_log.txt'
