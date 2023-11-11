@@ -10,7 +10,8 @@ import time
 import level_gen
 
 #DECAY = 0.95
-DECAY = 0.6
+#DECAY = 0.6
+DECAY = 0.7
 # interesting. Training this on puzzles that can be sloved in one move was not learning with a decay=.95 I think because the next move would still be so close to a win. Similar for training on puzzles solveable in 1 or 2 moves. But lowering the decay rate for these easy puzzles seems to have worked!
 
 
@@ -21,24 +22,9 @@ LEARNING_RATE = 1e-3
 
 
 NUM_EPOCHS =    5000  
-NUM_EPOCHS =  150000
+NUM_EPOCHS = 2500000
 
 
-'''
-Nice! With 1,550,000 epochs decay=.6  and step down learning rate:
-1549990 2.615379912640492e-07
-average_loss_end=0.00022892226667283922
-
-
-What if there were even more??
-Nice.
-3549990 1.2206539395265281e-05
-average_loss_end=4.849776981134823e-05
-
-Idea -- Auto decriment learning rate. If loss is less than (say) rate/10 for 10-20 epochs in a row, rate = rate/10
-
-
-'''
 
 NUM_TUBES  = 4
 #NUM_TUBES  = 5
@@ -79,11 +65,15 @@ else:
     OUTPUT_SIZE = NUM_TUBES * 2   # ball to and ball from
 
 
-DYN_LEARNING_RATE = True
+loss_function = 'MSE'
+#loss_function = nn.L1Loss()  # MAE  mean absolute error
+#loss_function = nn.SmoothL1Loss()  #huber
 
-STEP_LEARN_RATE   = False
-##STEP_LEARN_RATE   = True
 
+    
+DYN_LEARNING_RATE = False
+STEP_LEARN_RATE   = True
+##STEP_LEARN_RATE   = False
 
     
 
@@ -117,8 +107,8 @@ class NeuralNetwork(nn.Module):
             nn.ReLU(),
             nn.Linear(HIDDEN_SIZE, HIDDEN_SIZE),
             nn.ReLU(),
-            #nn.Linear(HIDDEN_SIZE//2, HIDDEN_SIZE),
-            #nn.ReLU(),
+            nn.Linear(HIDDEN_SIZE, HIDDEN_SIZE),
+            nn.ReLU(),
             nn.Linear(HIDDEN_SIZE, OUTPUT_SIZE),
         )
 
@@ -284,6 +274,7 @@ for stepnum in range(NUM_EPOCHS):
 
     if stepnum % 800 == 0:
         print(f"{LEARNING_RATE=}")
+        print("4 layers (As of this writing)")
         print(f"{logits=}")
         if SQUARED_OUTPUT:
             to_from_logs = logits.argmax()  # do this after training
@@ -404,17 +395,20 @@ for stepnum in range(NUM_EPOCHS):
             print(f"{DECAY=}")
         '''
         
+        if loss_function == 'MSE':
+            # MSE
+            loss = F.mse_loss(bellman_left, bellman_right)
 
-        # MSE    
-        loss = F.mse_loss(bellman_left, bellman_right)
+        else:
+            loss = loss_function(bellman_left, bellman_right) 
 
-        #  Huber Loss
-        #loss_function = nn.SmoothL1Loss()
-        #loss = loss_function(bellman_left, bellman_right)
-
-        #Mean Absolute Error (MAE)
-        #loss_function = nn.L1Loss()
-        #loss = loss_function(bellman_left, bellman_right)
+            #  Huber Loss
+            #loss_function = nn.SmoothL1Loss()
+            #loss = loss_function(bellman_left, bellman_right)
+        
+            #Mean Absolute Error (MAE)
+            #loss_function = nn.L1Loss()
+            #loss = loss_function(bellman_left, bellman_right)
     
 
     #print(f"{loss=}")
@@ -466,9 +460,11 @@ current_time = time.strftime("%Y-%m-%d-%H:%M:%S")
 log_content = (f"\n\n--------\nFinished run at {current_time}")
 log_content += (f"\n {average_loss_end} average_loss_end")
 log_content += (f"\n {NUM_EPOCHS} NUM_EPOCHS")
-log_content += (f"\n    {SQUARED_OUTPUT=}  ")
-log_content += (f"  {NUM_EPOCHS=} {DECAY=} ...  final learn: {LEARNING_RATE=} ")
-log_content += (f"  {DYN_LEARNING_RATE=} {STEP_LEARN_RATE=}")
+log_content += (f"\n    {SQUARED_OUTPUT=}  {loss_function=}")
+log_content += (f"\n  {NUM_EPOCHS=} {DECAY=}  final learn: {LEARNING_RATE=} ")
+log_content += (f"  {DYN_LEARNING_RATE=} {STEP_LEARN_RATE=} Step is Learn_rate /10 at 90% 95% and 99%")
+log_content += (f"\n    Added a second hidden layer, so neural net now has 4 total layers 2 hidden are same size as input. Let's see how this does")
+log_content += (f"\n    All above use MSE loss function. Now trying different loss on non-square to see. BUT different loss function might mean that the numbers here for loss are apples and oranges, so...")
 
 
 log_file_path = './run_log.txt'
