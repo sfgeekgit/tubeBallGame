@@ -34,6 +34,8 @@ NUM_COLORS = 2
 INPUT_SIZE = ( NUM_COLORS +1 ) * NUM_TUBES * TUBE_LENGTH
 HIDDEN_SIZE = INPUT_SIZE  # why not...
 
+
+
 '''
 Plays the tube ball game. 
 Every step of the game needs two values.
@@ -65,6 +67,14 @@ else:
     OUTPUT_SIZE = NUM_TUBES * 2   # ball to and ball from
 
 
+
+    ### To do...
+    ### currently only recodrind final loss rate, but that isn't reall what maters
+    ### end of training, automate 100 actual tests and see if it gets it right.
+    ### and/or what are the final logits, are they correct, how confident is the system of it's next move. (shoule be very confident with these simple puzzles
+
+    # also to do, have it step though REAL puzzels, that's a soon to-do (and maybe exhausitve search)
+    
 loss_function = 'MSE'
 #loss_function = nn.L1Loss()  # MAE  mean absolute error
 #loss_function = nn.SmoothL1Loss()  #huber
@@ -76,6 +86,7 @@ STEP_LEARN_RATE   = True
 ##STEP_LEARN_RATE   = False
 
     
+NN_SIZE = [INPUT_SIZE, HIDDEN_SIZE, HIDDEN_SIZE, OUTPUT_SIZE]
 
 
 def tube_list_to_tensor(tubes):
