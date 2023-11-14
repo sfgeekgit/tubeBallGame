@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 
 #DECAY = 0.95
 #DECAY = 0.6
-DECAY = 0.8
+DECAY = 0.88
 # interesting. Training this on puzzles that can be sloved in one move was not learning with a decay=.95 I think because the next move would still be so close to a win. Similar for training on puzzles solveable in 1 or 2 moves. But lowering the decay rate for these easy puzzles seems to have worked!
 
 
@@ -22,11 +22,11 @@ DECAY = 0.8
 LEARNING_RATE = 1e-3
 #LEARNING_RATE = 1e-4
 
-BATCH_SIZE = 5
+BATCH_SIZE = 10
 
 NUM_EPOCHS =    5000  
-#NUM_EPOCHS =  15000  
-NUM_EPOCHS = 2500000
+NUM_EPOCHS =  15000  
+#NUM_EPOCHS = 2500000
 
 
 NUM_TUBES  = 4
@@ -87,8 +87,8 @@ loss_function = 'MSE'
 
     
 DYN_LEARNING_RATE = False
-#STEP_LEARN_RATE   = True
-STEP_LEARN_RATE   = False
+STEP_LEARN_RATE   = True
+#STEP_LEARN_RATE   = False
 
     
 NN_SIZE = [INPUT_SIZE, HIDDEN_SIZE, HIDDEN_SIZE, OUTPUT_SIZE]
