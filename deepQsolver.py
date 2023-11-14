@@ -8,22 +8,25 @@ from test_tube import TestTube, TUBE_LENGTH, move_allowed, show_tubes_up
 from colors import to_colored_ball
 import time
 import level_gen
+import matplotlib.pyplot as plt
+
 
 #DECAY = 0.95
 #DECAY = 0.6
-DECAY = 0.7
+DECAY = 0.8
 # interesting. Training this on puzzles that can be sloved in one move was not learning with a decay=.95 I think because the next move would still be so close to a win. Similar for training on puzzles solveable in 1 or 2 moves. But lowering the decay rate for these easy puzzles seems to have worked!
+
 
 
 
 LEARNING_RATE = 1e-3
 #LEARNING_RATE = 1e-4
 
-
+BATCH_SIZE = 5
 
 NUM_EPOCHS =    5000  
+#NUM_EPOCHS =  15000  
 NUM_EPOCHS = 2500000
-
 
 
 NUM_TUBES  = 4
@@ -52,8 +55,10 @@ size NUM_TUBES * NUM_TUBES
 and the single biggest logit will be taken as the answer. For example if the largest logit is 0, then to_from will be assumed to be (0,0) and if the network outputs a 1, then to_from will be (0,1) etc
 '''
 
+WRITE_LOG = True
 
 EXHAUSTIVE = False
+#EXHAUSTIVE = True
 
 #SQUARED_OUTPUT = False
 SQUARED_OUTPUT = True
@@ -82,8 +87,8 @@ loss_function = 'MSE'
 
     
 DYN_LEARNING_RATE = False
-STEP_LEARN_RATE   = True
-##STEP_LEARN_RATE   = False
+#STEP_LEARN_RATE   = True
+STEP_LEARN_RATE   = False
 
     
 NN_SIZE = [INPUT_SIZE, HIDDEN_SIZE, HIDDEN_SIZE, OUTPUT_SIZE]
@@ -117,8 +122,8 @@ class NeuralNetwork(nn.Module):
             nn.Linear(INPUT_SIZE, HIDDEN_SIZE),
             nn.ReLU(),
             nn.Linear(HIDDEN_SIZE, HIDDEN_SIZE),
-            nn.ReLU(),
-            nn.Linear(HIDDEN_SIZE, HIDDEN_SIZE),
+            #nn.ReLU(),
+            #nn.Linear(HIDDEN_SIZE, HIDDEN_SIZE),
             nn.ReLU(),
             nn.Linear(HIDDEN_SIZE, OUTPUT_SIZE),
         )
@@ -247,57 +252,101 @@ def exhaustive_search():
 mynet  = NeuralNetwork()
 optimizer = torch.optim.AdamW(mynet.parameters(), lr=LEARNING_RATE)
 loss_rec = []
-
+loss_med_rec = []
 
 level = level_gen.GameLevel()
 #level.load_demo_easy()
 #level.load_demo_one_move()
 
 
+
+
 for stepnum in range(NUM_EPOCHS):
     #level.load_demo_one_move_rand(NUM_TUBES)
-    level.load_demo_one_or_two_move_rand(NUM_TUBES)
-    test_tubes = level.get_tubes()
-    #show_tubes_up(test_tubes, False)
+    lvls = []
+    rand_moves = []
+    rewards = []
+    keep_playing_list = []
+    right_ts_list = []
+
+    
+    for i in range(BATCH_SIZE):
+        level.load_demo_one_or_two_move_rand(NUM_TUBES)
+        test_tubes = level.get_tubes()
+        net_input = level_gen.tubes_to_list(test_tubes, NUM_TUBES)  # net_input is the state    
+        T1 = tube_list_to_tensor(net_input)
+        lvls.append(T1)
+        
+        # these are the values we are randomly checking with bellman
+        rfrom = random.randint(0, NUM_TUBES-1)
+        rto   = random.randint(0, NUM_TUBES-1)
+
+                
+        ##rand_from = torch.tensor(rfrom)  # do move, and compute right side
+        ##rand_to   = torch.tensor(rto)  # do move, and compute right side
+
+        ##if SQUARED_OUTPUT:
+        to_from_sq = rto * NUM_TUBES + rfrom
+        one_hots = F.one_hot(torch.tensor(to_from_sq), NUM_TUBES * NUM_TUBES)
+        rand_moves.append(one_hots)
+        rand_to_from = (rto, rfrom)
+        reward    =   reward_f(test_tubes, rand_to_from)
+        rewards.append(torch.tensor([reward]))
+        if reward == 0:
+            keep_playing_list.append(torch.tensor([1]))
+            #keep_playing_list.append(torch.tensor(1))
+        else:
+            keep_playing_list.append(torch.tensor([0]))
 
 
-    net_input = level_gen.tubes_to_list(test_tubes, NUM_TUBES)  # net_input is the state    
-    T = tube_list_to_tensor(net_input)
+        new_state = next_state(test_tubes, rand_to_from)    
+        right_input = level_gen.tubes_to_list(new_state, NUM_TUBES)
+        right_tensor = tube_list_to_tensor(right_input)
+        right_ts_list.append(right_tensor)
 
 
-    logits = mynet(T)  # that calls forward because __call__ is coded magic backend
-    #print("logits" , logits)
+        
+    rew_stack           = torch.stack(rewards)
+    keep_playing_vector = torch.stack(keep_playing_list)
+    rand_move_stack     = torch.stack(rand_moves)
 
 
-    if SQUARED_OUTPUT:
-        pass
-    else:
-        logits = logits.view(2,NUM_TUBES)
-    #print("logits" , logits)
+    T_left = torch.stack(lvls)
+    logits = mynet(T_left)  # that calls forward because __call__ is coded magic backend
+    logits = logits * rand_move_stack
+    bellman_left = logits.sum(dim=1, keepdim=True)
+    #print(f"{bellman_left=}")
+
+            
+    T_right =  torch.stack(right_ts_list)
+    right_logits = mynet(T_right) 
+    right_logits = right_logits.max(dim=1 , keepdim=True).values
+    #print(f"{right_logits=}")
 
 
-    # these are the values we are randomly checking with bellman
-    rfrom = random_int = random.randint(0, NUM_TUBES-1)
-    rto = random_int = random.randint(0, NUM_TUBES-1)
 
+    #print(f"{rew_stack.shape=}")
+    #print(f"{keep_playing_vector.shape=}")
+    #print(f"{right_logits.shape=}")
+    #print(f"{right_logits.sum().shape=}")
+    
+    bellman_right = rew_stack + keep_playing_vector * DECAY * right_logits
+    #bellman_right = rew_stack + keep_playing_vector * DECAY * right_logits.sum()   # sum is not needed????
+    #bellman_right = reward + keep_playing * DECAY * right_logits.sum()  
 
-
-
+    
+    
+    '''
+    #this needs to be re-factored for batches (or just removed)
     if stepnum % 800 == 0:
         print(f"{LEARNING_RATE=}")
-        print("4 layers (As of this writing)")
+
         print(f"{logits=}")
         if SQUARED_OUTPUT:
             to_from_logs = logits.argmax()  # do this after training
             move_to = to_from_logs // NUM_TUBES
             move_from = to_from_logs - move_to * NUM_TUBES
             to_from = [move_to, move_from]
-
-            #if stepnum % 3 == 0:
-            #   print("non-rand shenangans!")
-            #   rfrom = move_from
-            #   rto   = move_to
-
 
 
         else:
@@ -309,117 +358,34 @@ for stepnum in range(NUM_EPOCHS):
         new_state = next_state(test_tubes, to_from)    
         show_tubes_up(new_state, False)
         print("\n\n")
-        
+    '''
 
-    # move to   is first half of logits,  NUM_TUBES, 
-    # move from is other half of logits,  NUM_TUBES, 
-    ################
-
-    #print(f"{logits=}")
-    
-
-	
-
-    rand_from = torch.tensor(rfrom)  # do move, and compute right side
-    rand_to   = torch.tensor(rto)  # do move, and compute right side
-
-
+    '''
     if SQUARED_OUTPUT:
-        to_from_sq = rto * NUM_TUBES + rfrom
-        one_hots = F.one_hot(torch.tensor(to_from_sq), NUM_TUBES * NUM_TUBES)
-        logits = logits * one_hots
-
-        
+        right_logits = right_logits.max(dim=0).values
     else:
-        one_hots = torch.stack((F.one_hot(rand_to, NUM_TUBES), F.one_hot(rand_from, NUM_TUBES)))
-        logits = logits * one_hots	
-        logits = logits.sum(1)   # This is the left bellman!!  (need to turn this into one number, sum them or whatever)
-    # question, what is the best way to combine the 2 numbers (to and from) into 1 number for loss function. Start with just a sum, will work well enough, but maybe get something better. Whatever it is, needs to be used consistantly.
-    #print(f"{logits=}")
-
-
-
-
-    
-    bellman_left = logits.sum()
-    #print(f"{bellman_left=}")
-
-    # test one random
-    rand_to_from = (rto, rfrom)
-    reward    =   reward_f(test_tubes, rand_to_from)  
-
-    ## THIS REWARD IS WRONG?????
-
-
-
+        right_logits = right_logits.view(2,NUM_TUBES)
+        #print(f"{right_logits=}")
+        right_logits = right_logits.max(dim=1).values
+        #print(f"{right_logits=}")
+        #right_logits_max = right_logits.max(dim=1).values
+        #print(f"{right_logits_max=}")
     '''
-    if stepnum % 999800 == 0:
-        print(f"{rand_to=}")
-        print(f"{rand_from=}")
-        print(f"{rand_to_from=}")
-        print(f"{one_hots=}")
-        print(f"{logits=}")
-        print(f"{reward=}")
-        print(f"{bellman_left=}")
-    '''
+        
+    if loss_function == 'MSE':
+        # MSE
+        loss = F.mse_loss(bellman_left, bellman_right)
 
-
-    if EXHAUSTIVE:
-        loss = exhaustive_search()
     else:
-        # have we reached a terminal state?
-        if reward == 0:
-            keep_playing = torch.tensor(1)   # keep playing
-        else:
-            keep_playing = torch.tensor(0)   # terminal state, zero out the right logits, only use the reward
-    
-
+        loss = loss_function(bellman_left, bellman_right) 
         
-        new_state = next_state(test_tubes, rand_to_from)    
-        right_input = level_gen.tubes_to_list(new_state, NUM_TUBES)
-        T = tube_list_to_tensor(right_input)
-        right_logits = mynet(T) 
-
-
-        if SQUARED_OUTPUT:
-            right_logits = right_logits.max(dim=0).values
-        else:
-            right_logits = right_logits.view(2,NUM_TUBES)
-            #print(f"{right_logits=}")
-            right_logits = right_logits.max(dim=1).values
-            #print(f"{right_logits=}")
-            #right_logits_max = right_logits.max(dim=1).values
-            #print(f"{right_logits_max=}")
-
+        #  Huber Loss
+        #loss_function = nn.SmoothL1Loss()
+        #loss = loss_function(bellman_left, bellman_right)
         
-        bellman_right = reward + keep_playing * DECAY * right_logits.sum()   # should this be right_logits max??
-        # for right_logits, this is using the highest value (the highest confidence) but should be the position of that???
-
-        '''
-        if stepnum % 800 == 0:
-            print(f"{bellman_left=}")
-            print(f"{bellman_right=}")
-            print(f"{reward=}")
-            print(f"{keep_playing=}")
-            print(f"{right_logits=}")
-            print(f"{right_logits.sum()=}")
-            print(f"{DECAY=}")
-        '''
-        
-        if loss_function == 'MSE':
-            # MSE
-            loss = F.mse_loss(bellman_left, bellman_right)
-
-        else:
-            loss = loss_function(bellman_left, bellman_right) 
-
-            #  Huber Loss
-            #loss_function = nn.SmoothL1Loss()
-            #loss = loss_function(bellman_left, bellman_right)
-        
-            #Mean Absolute Error (MAE)
-            #loss_function = nn.L1Loss()
-            #loss = loss_function(bellman_left, bellman_right)
+        #Mean Absolute Error (MAE)
+        #loss_function = nn.L1Loss()
+        #loss = loss_function(bellman_left, bellman_right)
     
 
     #print(f"{loss=}")
@@ -428,9 +394,16 @@ for stepnum in range(NUM_EPOCHS):
     loss.backward()
     optimizer.step()
 
+
+    if stepnum % 20 == 19:
+        loss_med_rec.append(sorted(loss_rec[-18:])[9])
+    
     if stepnum %100==0:
         print(stepnum , loss.item())
 
+
+
+        
         if DYN_LEARNING_RATE:
             if stepnum > 50:
                 max_rec_loss = max(loss_rec[-8:])
@@ -466,21 +439,30 @@ print(f"{LEARNING_RATE=}")
 
 
 
-
-current_time = time.strftime("%Y-%m-%d-%H:%M:%S")
-log_content = (f"\n\n--------\nFinished run at {current_time}")
-log_content += (f"\n {average_loss_end} average_loss_end")
-log_content += (f"\n {NUM_EPOCHS} NUM_EPOCHS")
-log_content += (f"\n    {SQUARED_OUTPUT=}  {loss_function=}")
-log_content += (f"\n  {NUM_EPOCHS=} {DECAY=}  final learn: {LEARNING_RATE=} ")
-log_content += (f"  {DYN_LEARNING_RATE=} {STEP_LEARN_RATE=} Step is Learn_rate /10 at 90% 95% and 99%")
-log_content += (f"\n    Added a second hidden layer, so neural net now has 4 total layers 2 hidden are same size as input. Let's see how this does")
-log_content += (f"\n    All above use MSE loss function. Now trying different loss on non-square to see. BUT different loss function might mean that the numbers here for loss are apples and oranges, so...")
+#plt.plot(loss_rec)
+#plt.plot(loss_med_rec)
+#plt.show()
 
 
-log_file_path = './run_log.txt'
-with open(log_file_path, 'a') as f:
-    f.write(log_content)
+
+if WRITE_LOG:
+
+    ep_times_batch =  NUM_EPOCHS * BATCH_SIZE
+    current_time = time.strftime("%Y-%m-%d-%H:%M:%S")
+    log_content = (f"\n\n--------\nFinished run at {current_time}")
+    log_content += (f"\n {average_loss_end} average_loss_end")
+    log_content += (f"\n {NUM_EPOCHS} NUM_EPOCHS")
+    log_content += (f"\n {BATCH_SIZE=}  so epoch * batch size = {ep_times_batch=}")
+    log_content += (f"\n    {SQUARED_OUTPUT=}  {loss_function=}")
+    log_content += (f"\n  {NUM_EPOCHS=} {DECAY=}  final learn: {LEARNING_RATE=} ")
+    log_content += (f"  {DYN_LEARNING_RATE=} {STEP_LEARN_RATE=} Step is Learn_rate /10 at 90% 95% and 99%")
+    #log_content += (f"\n    Added a second hidden layer, so neural net now has 4 total layers 2 hidden are same size as input. Let's see how this does")
+
+
+
+    log_file_path = './run_log.txt'
+    with open(log_file_path, 'a') as f:
+        f.write(log_content)
 
 
 
