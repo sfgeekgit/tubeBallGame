@@ -25,7 +25,7 @@ BATCH_SIZE = 15
 
 NUM_EPOCHS =    5000  
 #NUM_EPOCHS =   25000  
-NUM_EPOCHS = 2500000
+#NUM_EPOCHS = 2500000
 
 
 NUM_TUBES  = 4
@@ -468,13 +468,20 @@ if WRITE_LOG:
     log_content += (f"\n    {SQUARED_OUTPUT=}  {loss_function=}")
     log_content += (f"\n  {NUM_EPOCHS=} {DECAY=}  final learn: {LEARNING_RATE=} ")
     log_content += (f"  {DYN_LEARNING_RATE=} {STEP_LEARN_RATE=} Step is Learn_rate /10 at 90% 95% and 99%")
-    #log_content += (f"\n    Added a second hidden layer, so neural net now has 4 total layers 2 hidden are same size as input. Let's see how this does")
 
 
 
     log_file_path = './run_log.txt'
     with open(log_file_path, 'a') as f:
         f.write(log_content)
+
+    torch.save(mynet.state_dict(), '../tubeballgame_stuff/models/model.pt')
+
+    #model = TheModelClass(*args, **kwargs)
+    #the_model.load_state_dict(torch.load(PATH))
+    #model.eval()
+
+
 
 
 
