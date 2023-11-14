@@ -9,6 +9,8 @@ from colors import to_colored_ball
 import time
 import level_gen
 import matplotlib.pyplot as plt
+from collections import OrderedDict
+
 
 
 #DECAY = 0.95
@@ -16,17 +18,14 @@ import matplotlib.pyplot as plt
 DECAY = 0.88
 # interesting. Training this on puzzles that can be sloved in one move was not learning with a decay=.95 I think because the next move would still be so close to a win. Similar for training on puzzles solveable in 1 or 2 moves. But lowering the decay rate for these easy puzzles seems to have worked!
 
-
-
-
 LEARNING_RATE = 1e-3
 #LEARNING_RATE = 1e-4
 
-BATCH_SIZE = 10
+BATCH_SIZE = 15
 
 NUM_EPOCHS =    5000  
-NUM_EPOCHS =  15000  
-#NUM_EPOCHS = 2500000
+#NUM_EPOCHS =   25000  
+NUM_EPOCHS = 2500000
 
 
 NUM_TUBES  = 4
@@ -54,6 +53,7 @@ But if SQUARED_OUTPUT == True, then the final output layer will be of
 size NUM_TUBES * NUM_TUBES
 and the single biggest logit will be taken as the answer. For example if the largest logit is 0, then to_from will be assumed to be (0,0) and if the network outputs a 1, then to_from will be (0,1) etc
 '''
+
 
 WRITE_LOG = True
 
@@ -91,7 +91,7 @@ STEP_LEARN_RATE   = True
 #STEP_LEARN_RATE   = False
 
     
-NN_SIZE = [INPUT_SIZE, HIDDEN_SIZE, HIDDEN_SIZE, OUTPUT_SIZE]
+NN_SIZE = [INPUT_SIZE, HIDDEN_SIZE,  HIDDEN_SIZE*2, HIDDEN_SIZE, OUTPUT_SIZE]
 
 
 def tube_list_to_tensor(tubes):
@@ -109,24 +109,36 @@ def tube_list_to_tensor(tubes):
     return T.float()
 
 
-
-
 class NeuralNetwork(nn.Module):
 
     # might add more layers... Just get prototype working first
 
     def __init__(self):
         super().__init__()
-        
+
+        layers = OrderedDict()
+        for i in range(len(NN_SIZE) - 1):
+            layers[f"layer_{i}"] = nn.Linear(NN_SIZE[i], NN_SIZE[i+1])
+            if i < len(NN_SIZE) - 2:  # No ReLU after last layer
+                layers[f"relu_{i}"] = nn.ReLU()
+
+        self.linear_relu_stack = nn.Sequential(layers)
+
+
+
+        '''
         self.linear_relu_stack = nn.Sequential(
             nn.Linear(INPUT_SIZE, HIDDEN_SIZE),
             nn.ReLU(),
             nn.Linear(HIDDEN_SIZE, HIDDEN_SIZE),
-            #nn.ReLU(),
-            #nn.Linear(HIDDEN_SIZE, HIDDEN_SIZE),
+            ##nn.ReLU(),
+            ##nn.Linear(HIDDEN_SIZE, HIDDEN_SIZE),
             nn.ReLU(),
             nn.Linear(HIDDEN_SIZE, OUTPUT_SIZE),
         )
+        '''
+
+
 
     def forward(self, x):
         logits = self.linear_relu_stack(x)        
@@ -446,13 +458,13 @@ print(f"{LEARNING_RATE=}")
 
 
 if WRITE_LOG:
-
     ep_times_batch =  NUM_EPOCHS * BATCH_SIZE
     current_time = time.strftime("%Y-%m-%d-%H:%M:%S")
     log_content = (f"\n\n--------\nFinished run at {current_time}")
     log_content += (f"\n {average_loss_end} average_loss_end")
     log_content += (f"\n {NUM_EPOCHS} NUM_EPOCHS")
     log_content += (f"\n {BATCH_SIZE=}  so epoch * batch size = {ep_times_batch=}")
+    log_content += (f"\n {NN_SIZE=}")
     log_content += (f"\n    {SQUARED_OUTPUT=}  {loss_function=}")
     log_content += (f"\n  {NUM_EPOCHS=} {DECAY=}  final learn: {LEARNING_RATE=} ")
     log_content += (f"  {DYN_LEARNING_RATE=} {STEP_LEARN_RATE=} Step is Learn_rate /10 at 90% 95% and 99%")
