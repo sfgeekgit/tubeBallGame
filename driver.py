@@ -3,10 +3,12 @@ import subprocess
 import csv
 import shutil
 
+base_path = '../dq_runs/'
+
 # Define your configurations
 configs = [
     {'batch_size': 32, 'num_epochs': 100, 'loss_function': 'mse'},
-    {'batch_size': 64, 'num_epochs': 200, 'loss_function': 'mae'},
+    # {'batch_size': 64, 'num_epochs': 200, 'loss_function': 'mae'},
     # Add more configurations as needed
 ]
 
@@ -19,17 +21,17 @@ num_dirs = len([name for name in os.listdir('.') if os.path.isdir(name)])
 for i, config in enumerate(configs):
     # Create a new directory for this configuration
     dir_name = f'config_{num_dirs + i}'
-    os.makedirs(dir_name, exist_ok=True)
+    os.makedirs(base_path + dir_name, exist_ok=True)
     config['dir_name'] = dir_name
 
 
     # Write the configuration to a Python file
-    with open(os.path.join(dir_name, 'config.py'), 'w') as f:
+    with open(os.path.join(base_path + dir_name, 'config.py'), 'w') as f:
         for key, value in config.items():
             f.write(f'{key.upper()} = {value}\n')
 
     # Write the configuration to a CSV file
-    with open(os.path.join(dir_name, 'config.csv'), 'w') as f:
+    with open(os.path.join(base_path + dir_name, 'config.csv'), 'w') as f:
         writer = csv.writer(f)
         for key, value in config.items():
             writer.writerow([key, value])

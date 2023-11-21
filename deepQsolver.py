@@ -23,10 +23,18 @@ LEARNING_RATE = 1e-3
 
 BATCH_SIZE = 15
 
+
 NUM_EPOCHS =    5000  
 #NUM_EPOCHS =   25000  
 #NUM_EPOCHS = 2500000
 
+
+#import importlib.util
+#config_file_path = '../dq_runs/config_3/config.py'
+#spec = importlib.util.spec_from_file_location("config", config_file_path)
+#config = importlib.util.module_from_spec(spec)
+#spec.loader.exec_module(config)
+#quit()
 
 NUM_TUBES  = 4
 #NUM_TUBES  = 5
@@ -94,6 +102,8 @@ STEP_LEARN_RATE   = True
 NN_SIZE = [INPUT_SIZE, HIDDEN_SIZE,  HIDDEN_SIZE*2, HIDDEN_SIZE, OUTPUT_SIZE]
 
 
+
+#############################################
 def tube_list_to_tensor(tubes):
     dic = {}
     dic[0] = [1,0,0]
