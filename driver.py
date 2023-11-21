@@ -20,6 +20,8 @@ for i, config in enumerate(configs):
     # Create a new directory for this configuration
     dir_name = f'config_{num_dirs + i}'
     os.makedirs(dir_name, exist_ok=True)
+    config['dir_name'] = dir_name
+
 
     # Write the configuration to a Python file
     with open(os.path.join(dir_name, 'config.py'), 'w') as f:
@@ -33,7 +35,7 @@ for i, config in enumerate(configs):
             writer.writerow([key, value])
 
     # Call the other script with this configuration
-    subprocess.run(['python', training_script, '--config', os.path.join(dir_name, 'config.py')])
+    #subprocess.run(['python3', training_script, '--config', os.path.join(dir_name, 'config.py')])
 
     # Move the generated neural network to the new directory
-    shutil.move('neural_network.h5', os.path.join(dir_name, 'neural_network.h5'))
+    # shutil.move('neural_network.h5', os.path.join(dir_name, 'neural_network.h5'))
