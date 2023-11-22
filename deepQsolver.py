@@ -11,34 +11,54 @@ import level_gen
 import matplotlib.pyplot as plt
 from collections import OrderedDict
 
+config_file_path = '../dq_runs/config_3'
+config_file = config_file_path + '/config.py'
+
+load_config_file = False
+
+# all of these can be overwritten by a config file
+default_values = {
+    "NUM_EPOCHS": 5000,
+    "DECAY": 0.88,
+    "LEARNING_RATE": 1e-3,
+    "BATCH_SIZE": 15,
+
+    "NUM_TUBES"  : 4,
+    #"NUM_TUBES"  : 5,
+    "NUM_COLORS" : 2,
+
+    "WRITE_LOG" : True,
+
+    "EXHAUSTIVE" : False,
+    #"EXHAUSTIVE" : True,
+    #"SQUARED_OUTPUT" : False,
+    "SQUARED_OUTPUT" : True,
+
+    "loss_function" : 'MSE',
+    #loss_function : nn.L1Loss()  # MAE  mean absolute error
+    #loss_function : nn.SmoothL1Loss()  #huber 
+
+    "DYN_LEARNING_RATE" : False,
+    "STEP_LEARN_RATE"   : True,
+    #STEP_LEARN_RATE   : False
+}
 
 
-#DECAY = 0.95
-#DECAY = 0.6
-DECAY = 0.88
 # interesting. Training this on puzzles that can be sloved in one move was not learning with a decay=.95 I think because the next move would still be so close to a win. Similar for training on puzzles solveable in 1 or 2 moves. But lowering the decay rate for these easy puzzles seems to have worked!
 
-LEARNING_RATE = 1e-3
-#LEARNING_RATE = 1e-4
+if load_config_file:
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("config", config_file)
+    config = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(config)    
+    for param in default_values.keys():    
+        globals()[param] = getattr(config, param, default_values[param])
+else:
+   config_file = False
+   config_file_path = False
+   for param in default_values.keys():    
+        globals()[param] = default_values[param]
 
-BATCH_SIZE = 15
-
-
-NUM_EPOCHS =    5000  
-#NUM_EPOCHS =   25000  
-#NUM_EPOCHS = 2500000
-
-
-#import importlib.util
-#config_file_path = '../dq_runs/config_3/config.py'
-#spec = importlib.util.spec_from_file_location("config", config_file_path)
-#config = importlib.util.module_from_spec(spec)
-#spec.loader.exec_module(config)
-#quit()
-
-NUM_TUBES  = 4
-#NUM_TUBES  = 5
-NUM_COLORS = 2
 
 
 INPUT_SIZE = ( NUM_COLORS +1 ) * NUM_TUBES * TUBE_LENGTH
@@ -62,15 +82,6 @@ size NUM_TUBES * NUM_TUBES
 and the single biggest logit will be taken as the answer. For example if the largest logit is 0, then to_from will be assumed to be (0,0) and if the network outputs a 1, then to_from will be (0,1) etc
 '''
 
-
-WRITE_LOG = True
-
-EXHAUSTIVE = False
-#EXHAUSTIVE = True
-
-#SQUARED_OUTPUT = False
-SQUARED_OUTPUT = True
-
 if SQUARED_OUTPUT:
     # get ONE output, take the to and from (so 7 tubes would need 49 outputs)
     OUTPUT_SIZE = NUM_TUBES * NUM_TUBES   # 
@@ -88,15 +99,6 @@ else:
 
     # also to do, have it step though REAL puzzels, that's a soon to-do (and maybe exhausitve search)
     
-loss_function = 'MSE'
-#loss_function = nn.L1Loss()  # MAE  mean absolute error
-#loss_function = nn.SmoothL1Loss()  #huber
-
-
-    
-DYN_LEARNING_RATE = False
-STEP_LEARN_RATE   = True
-#STEP_LEARN_RATE   = False
 
     
 NN_SIZE = [INPUT_SIZE, HIDDEN_SIZE,  HIDDEN_SIZE*2, HIDDEN_SIZE, OUTPUT_SIZE]
