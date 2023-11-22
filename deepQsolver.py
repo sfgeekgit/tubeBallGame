@@ -14,11 +14,12 @@ from collections import OrderedDict
 config_file_path = '../dq_runs/config_3'
 config_file = config_file_path + '/config.py'
 
-load_config_file = False
+#load_config_file = False
+load_config_file = True
 
 # all of these can be overwritten by a config file
 default_values = {
-    "NUM_EPOCHS": 5000,
+    "NUM_EPOCHS": 1000,
     "DECAY": 0.88,
     "LEARNING_RATE": 1e-3,
     "BATCH_SIZE": 15,
@@ -487,7 +488,16 @@ if WRITE_LOG:
     with open(log_file_path, 'a') as f:
         f.write(log_content)
 
-    torch.save(mynet.state_dict(), '../tubeballgame_stuff/models/model.pt')
+    if config_file_path:
+        log_file = config_file_path + '/run_log.txt'
+        with open(log_file, 'a') as f:
+            f.write(log_content)
+        save_path = config_file_path + '/model.pt'
+        torch.save(mynet.state_dict(), save_path)
+
+
+
+    #torch.save(mynet.state_dict(), '../tubeballgame_stuff/models/model.pt')
 
     #model = TheModelClass(*args, **kwargs)
     #the_model.load_state_dict(torch.load(PATH))
