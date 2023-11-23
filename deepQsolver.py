@@ -14,8 +14,8 @@ from collections import OrderedDict
 config_file_path = '../dq_runs/config_3'
 config_file = config_file_path + '/config.py'
 
-#load_config_file = False
-load_config_file = True
+load_config_file = False
+#load_config_file = True
 
 # all of these can be overwritten by a config file
 default_values = {
@@ -45,6 +45,7 @@ default_values = {
 }
 
 
+
 # interesting. Training this on puzzles that can be sloved in one move was not learning with a decay=.95 I think because the next move would still be so close to a win. Similar for training on puzzles solveable in 1 or 2 moves. But lowering the decay rate for these easy puzzles seems to have worked!
 
 if load_config_file:
@@ -59,7 +60,6 @@ else:
    config_file_path = False
    for param in default_values.keys():    
         globals()[param] = default_values[param]
-
 
 
 INPUT_SIZE = ( NUM_COLORS +1 ) * NUM_TUBES * TUBE_LENGTH
@@ -107,6 +107,30 @@ NN_SIZE = [INPUT_SIZE, HIDDEN_SIZE,  HIDDEN_SIZE*2, HIDDEN_SIZE, OUTPUT_SIZE]
 
 
 #############################################
+def tube_list_to_tensor(tubes):  # this should be in another file...
+    '''
+    # doing it like this for now just to really see what is inside the box
+    dic = {}    
+    dic[0] = [1,0,0]
+    dic[1] = [0,1,0]
+    dic[2] = [0,0,1]
+    '''
+
+    dic = {}
+    for i in range(NUM_COLORS +1):
+        dic[i] = [0]*(NUM_COLORS+1)
+        dic[i][i] = 1
+
+    #dic = torch.eye(NUM_COLORS +1)
+
+    t_input = []
+
+    for ball in tubes:
+        t_input.extend(dic[ball])
+
+    T = torch.tensor(t_input)
+    return T.float()
+'''
 def tube_list_to_tensor(tubes):
     dic = {}
     dic[0] = [1,0,0]
@@ -120,7 +144,7 @@ def tube_list_to_tensor(tubes):
 
     T = torch.tensor(t_input)
     return T.float()
-
+'''
 
 class NeuralNetwork(nn.Module):
 
