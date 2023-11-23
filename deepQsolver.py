@@ -8,7 +8,7 @@ from test_tube import TestTube, TUBE_LENGTH, move_allowed, show_tubes_up
 from colors import to_colored_ball
 import time
 import level_gen
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 from collections import OrderedDict
 
 config_file_path = '../dq_runs/config_3'
@@ -413,7 +413,6 @@ for stepnum in range(NUM_EPOCHS):
         #loss = loss_function(bellman_left, bellman_right)
     
 
-    #print(f"{loss=}")
     loss_rec.append(loss.item())
     optimizer.zero_grad()
     loss.backward()
@@ -425,9 +424,6 @@ for stepnum in range(NUM_EPOCHS):
     
     if stepnum %100==0:
         print(stepnum , loss.item())
-
-
-
         
         if DYN_LEARNING_RATE:
             if stepnum > 50:
@@ -496,9 +492,18 @@ if WRITE_LOG:
         torch.save(mynet.state_dict(), save_path)
 
 
+        #print("my net", mynet)
+        scripted_model = torch.jit.script(mynet)
+        save_path = config_file_path + '/model.pth'
+        torch.jit.save(scripted_model, save_path)
+
+        # Load the model
+        #loaded_model = torch.jit.load("model.pth")
+        #print("loaded model", loaded_model)
+
+
 
     #torch.save(mynet.state_dict(), '../tubeballgame_stuff/models/model.pt')
-
     #model = TheModelClass(*args, **kwargs)
     #the_model.load_state_dict(torch.load(PATH))
     #model.eval()
