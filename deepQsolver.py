@@ -121,7 +121,7 @@ def tube_list_to_tensor(tubes):  # this should be in another file...
         dic[i] = [0]*(NUM_COLORS+1)
         dic[i][i] = 1
 
-    #dic = torch.eye(NUM_COLORS +1)
+    #dic = torch.eye(NUM_COLORS +1) # slower
 
     t_input = []
 

@@ -67,7 +67,8 @@ def main():
   #level.load_demo_hard()
   test_tubes = level.get_tubes()
 
-  net_input = level_gen.tubes_to_input(test_tubes)
+  #net_input = level_gen.tubes_to_input(test_tubes)
+  net_input = level_gen.tubes_to_list(test_tubes)
   print("net input", net_input)
   #print(test_tubes)
   #quit()
