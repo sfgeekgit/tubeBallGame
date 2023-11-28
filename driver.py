@@ -7,21 +7,41 @@ base_path = '../dq_runs/'
 
 # Define your configurations
 configs = [
-    {'batch_size': 32, 'num_epochs': 100, 'loss_function': 'mse'},
-    # {'batch_size': 64, 'num_epochs': 200, 'loss_function': 'mae'},
-    # Add more configurations as needed
+    {'batch_size': 4,
+     'num_epochs': 5000,
+     "DECAY": 0.88,
+     "LEARNING_RATE": 1e-3,
+     "BATCH_SIZE": 3,
+     'loss_function': 'mse',
+     "DYN_LEARNING_RATE" : False,
+     "STEP_LEARN_RATE"   : True,
+     "NUM_TUBES"  : 4,
+     "NUM_COLORS" : 2,
+     "WRITE_LOG" : True,
+     "EXHAUSTIVE" : False,
+     "SQUARED_OUTPUT" : True,
+     }
 ]
+
+configs.append(configs[0]) # make a 2nd copy
+configs.append(configs[0]) # make another copy
+configs.append(configs[0]) # make another copy
+
+
+
 
 # Path to the other script
 training_script = './deepQsolver.py'
 
 # Get the number of existing subdirectories
-num_dirs = len([name for name in os.listdir('.') if os.path.isdir(name)])
+num_dirs = len(next(os.walk(base_path))[1])
 
-for i, config in enumerate(configs):
+
+
+for i, config in enumerate(configs):    
     # Create a new directory for this configuration
     dir_name = f'config_{num_dirs + i}'
-    os.makedirs(base_path + dir_name, exist_ok=True)
+    os.makedirs(base_path + dir_name, exist_ok=False)
     config['dir_name'] = dir_name
 
 

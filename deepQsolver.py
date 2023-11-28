@@ -19,10 +19,10 @@ load_config_file = False
 
 # all of these can be overwritten by a config file
 default_values = {
-    "NUM_EPOCHS": 1000,
+    "NUM_EPOCHS": 25000,
     "DECAY": 0.88,
     "LEARNING_RATE": 1e-3,
-    "BATCH_SIZE": 15,
+    "BATCH_SIZE": 3,
 
     "NUM_TUBES"  : 4,
     #"NUM_TUBES"  : 5,
@@ -385,14 +385,48 @@ for stepnum in range(NUM_EPOCHS):
 
     
     
-    '''
-    #this needs to be re-factored for batches (or just removed)
-    if stepnum % 800 == 0:
-        print(f"{LEARNING_RATE=}")
 
-        print(f"{logits=}")
-        if SQUARED_OUTPUT:
+
+
+    
+
+    if SQUARED_OUTPUT:
+        if stepnum % 800 == 0:
+            print(f"{LEARNING_RATE=}")
+            net_input = level_gen.tubes_to_list(test_tubes, NUM_TUBES)
+            T = tube_list_to_tensor(net_input)
+
+
+            logits = mynet(T)  # that calls forward because __call__ is coded magic backend
+            print(f"{logits=}")
+            logits_mv = logits.max(dim=0).values
+            print(f"{logits_mv=}")
             to_from_logs = logits.argmax()  # do this after training
+            #print(f"{to_from_logs=}")
+            move_to = to_from_logs // NUM_TUBES
+            move_from = to_from_logs - move_to * NUM_TUBES
+            to_from = [move_to, move_from]
+            
+            show_tubes_up(test_tubes, False)
+            print(f"{to_from=}")
+            new_state = next_state(test_tubes, to_from)
+            show_tubes_up(new_state, False)
+
+
+
+
+        
+    ''' 
+        print(f"{LEARNING_RATE=}")
+        lz = logits[BATCH_SIZE-1]
+        print(f"{logits=}")
+        print(f"{lz=}")
+
+
+        if SQUARED_OUTPUT:
+            #to_from_logs = logits.argmax()  # do this after training
+            to_from_logs = lz.argmax()  # do this after training
+            print(f"{to_from_logs=}")
             move_to = to_from_logs // NUM_TUBES
             move_from = to_from_logs - move_to * NUM_TUBES
             to_from = [move_to, move_from]
@@ -407,7 +441,10 @@ for stepnum in range(NUM_EPOCHS):
         new_state = next_state(test_tubes, to_from)    
         show_tubes_up(new_state, False)
         print("\n\n")
+        #quit()
+
     '''
+
 
     '''
     if SQUARED_OUTPUT:
