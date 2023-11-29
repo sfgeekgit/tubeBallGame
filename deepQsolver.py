@@ -33,20 +33,23 @@ else:
 
 # all of these can be overwritten by a config file
 default_values = {
-    "NUM_EPOCHS": 250,
+    "NUM_EPOCHS": 5000,
     "DECAY": 0.88,
     "LEARNING_RATE": 1e-3,
-    #"BATCH_SIZE": 10,
-    "BATCH_SIZE": 1,
+    "BATCH_SIZE": 10,
+    "STEP_BATCH": True,
 
     "NUM_TUBES"  : 4,
-    #"NUM_TUBES"  : 5,
     "NUM_COLORS" : 2,
 
-    "WRITE_LOG" : True,
-
-    "EXHAUSTIVE" : False,
+    
+    "TRAIN_LEVEL_TYPE":'random',
+    #"TRAIN_LEVEL_TYPE":'one_or_two',
+    
     "SQUARED_OUTPUT" : True,
+    "WRITE_LOG" : True,
+    "EXHAUSTIVE" : False,
+
 
     "loss_function" : 'MSE',
     #loss_function : nn.L1Loss()  # MAE  mean absolute error
@@ -55,6 +58,8 @@ default_values = {
     "DYN_LEARNING_RATE" : False,
     "STEP_LEARN_RATE"   : True,
     #STEP_LEARN_RATE   : False
+
+    
 }
 
 
@@ -79,22 +84,6 @@ INPUT_SIZE = ( NUM_COLORS +1 ) * NUM_TUBES * TUBE_LENGTH
 HIDDEN_SIZE = INPUT_SIZE  # why not...
 
 
-
-'''
-Plays the tube ball game. 
-Every step of the game needs two values.
--- What tube to move from
--- What tube to move to
-
-This code has two differnt settings for how to build the neural network output.
-If SQUARED_OUTPUT == False then the final output layer of the network will an
-output size of  NUM_TUBES * 2 
-this output will be split in half. The largest logit from the first half will be move_to and the largest logit of the second half will be move_from
-
-But if SQUARED_OUTPUT == True, then the final output layer will be of 
-size NUM_TUBES * NUM_TUBES
-and the single biggest logit will be taken as the answer. For example if the largest logit is 0, then to_from will be assumed to be (0,0) and if the network outputs a 1, then to_from will be (0,1) etc
-'''
 
 if SQUARED_OUTPUT:
     # get ONE output, take the to and from (so 7 tubes would need 49 outputs)
@@ -309,7 +298,7 @@ level = level_gen.GameLevel()
 
 
 for stepnum in range(NUM_EPOCHS):
-    #level.load_demo_one_move_rand(NUM_TUBES)
+
     lvls = []
     rand_moves = []
     rewards = []
@@ -318,7 +307,12 @@ for stepnum in range(NUM_EPOCHS):
 
     
     for i in range(BATCH_SIZE):
-        level.load_demo_one_or_two_move_rand(NUM_TUBES)
+        if TRAIN_LEVEL_TYPE == 'random':
+            level.load_level_rand(NUM_COLORS,NUM_TUBES)
+        elif TRAIN_LEVEL_TYPE == 'one_or_two':
+            level.load_demo_one_or_two_move_rand(NUM_TUBES)
+        else:
+            level.load_demo_one_or_two_move_rand(NUM_TUBES)
         test_tubes = level.get_tubes()
         net_input = level_gen.tubes_to_list(test_tubes, NUM_TUBES)  # net_input is the state    
         T1 = tube_list_to_tensor(net_input)
@@ -413,49 +407,6 @@ for stepnum in range(NUM_EPOCHS):
 
 
 
-
-        
-    ''' 
-        print(f"{LEARNING_RATE=}")
-        lz = logits[BATCH_SIZE-1]
-        print(f"{logits=}")
-        print(f"{lz=}")
-
-
-        if SQUARED_OUTPUT:
-            #to_from_logs = logits.argmax()  # do this after training
-            to_from_logs = lz.argmax()  # do this after training
-            print(f"{to_from_logs=}")
-            move_to = to_from_logs // NUM_TUBES
-            move_from = to_from_logs - move_to * NUM_TUBES
-            to_from = [move_to, move_from]
-
-
-        else:
-            to_from = logits.argmax(1).tolist()  # do this after training
-
-        
-        show_tubes_up(test_tubes, False)
-        print(f"{to_from=}")
-        new_state = next_state(test_tubes, to_from)    
-        show_tubes_up(new_state, False)
-        print("\n\n")
-        #quit()
-
-    '''
-
-
-    '''
-    if SQUARED_OUTPUT:
-        right_logits = right_logits.max(dim=0).values
-    else:
-        right_logits = right_logits.view(2,NUM_TUBES)
-        #print(f"{right_logits=}")
-        right_logits = right_logits.max(dim=1).values
-        #print(f"{right_logits=}")
-        #right_logits_max = right_logits.max(dim=1).values
-        #print(f"{right_logits_max=}")
-    '''
         
     if loss_function == 'MSE':
         # MSE
@@ -494,7 +445,7 @@ for stepnum in range(NUM_EPOCHS):
                 if median_rec_loss < LEARNING_RATE * 50 and max_rec_loss < LEARNING_RATE*500:
                     print(f"{LEARNING_RATE=}")
                     LEARNING_RATE = LEARNING_RATE / 5
-                    print ("---------------------------------------\nLower Learning Rate \n==================================================================")
+                    print ("---------------------------------------\nLower Learning Rate \n=================")
                     print(f"{LEARNING_RATE=}")
 
 
@@ -503,7 +454,7 @@ for stepnum in range(NUM_EPOCHS):
         for l_step in [.9, .95, .99]:
             if stepnum == NUM_EPOCHS * l_step:
                 print(f"{LEARNING_RATE=}")
-                print ("---------------------------------------\nLower Learning Rate \n==================================================================")
+                print ("---------------------------------------\nLower Learning Rate \n==============")
                 LEARNING_RATE = LEARNING_RATE / 10
                 print(f"{LEARNING_RATE=}")
                 optimizer = torch.optim.AdamW(mynet.parameters(), lr=LEARNING_RATE)
@@ -539,6 +490,10 @@ if WRITE_LOG:
     log_content += (f"  {DYN_LEARNING_RATE=} {STEP_LEARN_RATE=} Step is Learn_rate /10 at 90% 95% and 99%")
 
 
+    for para in default_values.keys():
+        log_content += (f" \n{para}  = {globals()[para]} ")
+    log_content += "\n"
+        
 
     log_file_path = './run_log.txt'
     with open(log_file_path, 'a') as f:
@@ -557,10 +512,6 @@ if WRITE_LOG:
         save_path = config_file_path + '/model.pth'
         torch.jit.save(scripted_model, save_path)
 
-        # Load the model
-        #loaded_model = torch.jit.load("model.pth")
-        #print("loaded model", loaded_model)
-
 
 
     #torch.save(mynet.state_dict(), '../tubeballgame_stuff/models/model.pt')
@@ -570,41 +521,84 @@ if WRITE_LOG:
 
 
 
+log2_content = ''
+
+log2_content +=("\n\n--\nNow run it again and see what it does\n")
 
 
-print("\n\n--\nNow run it again and see what it does\n")
+if TRAIN_LEVEL_TYPE == 'random':
+    level.load_level_rand(NUM_COLORS,NUM_TUBES)
+elif TRAIN_LEVEL_TYPE == 'one_or_two':
+    level.load_demo_one_or_two_move_rand(NUM_TUBES)
+    
+else:
+    level.load_demo_one_or_two_move_rand(NUM_TUBES)
 
+test_tubes = level.get_tubes()
 net_input = level_gen.tubes_to_list(test_tubes, NUM_TUBES)  
-show_tubes_up(test_tubes, False)
+log2_content += show_tubes_up(test_tubes, False)
 T = tube_list_to_tensor(net_input)
 
 
   
 logits = mynet(T)  # that calls forward because __call__ is coded magic backend
-#print("logits" , logits)
+#log2_content +=("logits" , logits)
 
-if SQUARED_OUTPUT:
-    print(f"{logits=}")
-    logits_mv = logits.max(dim=0).values
-    print(f"{logits_mv=}")
-    to_from_logs = logits.argmax()  # do this after training
-    print(f"{to_from_logs=}")
-    move_to = to_from_logs // NUM_TUBES
-    move_from = to_from_logs - move_to * NUM_TUBES
-    to_from = [move_to, move_from]
+#if SQUARED_OUTPUT:
+log2_content +=(f"{logits=}\n")
+logits_mv = logits.max(dim=0).values
+log2_content +=(f"{logits_mv=}\n")
+to_from_logs = logits.argmax()  # do this after training
+log2_content +=(f"{to_from_logs=}\n")
+move_to = to_from_logs // NUM_TUBES
+move_from = to_from_logs - move_to * NUM_TUBES
+to_from = [move_to, move_from]
 
 
-    
+'''    
 else:
     logits = logits.view(2,NUM_TUBES)
-    print(f"{logits=}")
+    log2_content +=(f"{logits=}\n")
     to_from = logits.argmax(1).tolist()  # do this after training
+'''
 
-print(f"{to_from=}")
+
+log2_content +=(f"{to_from=}\n")
 new_state = next_state(test_tubes, to_from)    
-show_tubes_up(new_state, False)
+log2_content += show_tubes_up(new_state, False)
 
 
+
+log2_content += ("And finally, a simple puzzle...\n")
+level.load_demo_one_or_two_move_rand(NUM_TUBES)
+
+test_tubes = level.get_tubes()
+net_input = level_gen.tubes_to_list(test_tubes, NUM_TUBES)  
+log2_content += show_tubes_up(test_tubes, False)
+T = tube_list_to_tensor(net_input)
+
+  
+logits = mynet(T)  
+log2_content +=(f"{logits=}\n")
+logits_mv = logits.max(dim=0).values
+log2_content +=(f"{logits_mv=}\n")
+to_from_logs = logits.argmax()  
+move_to = to_from_logs // NUM_TUBES
+move_from = to_from_logs - move_to * NUM_TUBES
+to_from = [move_to, move_from]
+
+
+log2_content +=(f"{to_from=}\n")
+new_state = next_state(test_tubes, to_from)    
+log2_content += show_tubes_up(new_state, False)
+
+
+
+print(log2_content)
+if config_file_path:
+    log_file = config_file_path + '/run_log.txt'
+    with open(log_file, 'a') as f:
+        f.write(log2_content)
 
 
 
@@ -624,3 +618,23 @@ show_tubes_up(new_state, False)
 # then pass these to a loss function and train on that.
 
 # Q(s, a) = R + max(Q(s', a))
+
+
+
+
+'''
+Plays the tube ball game. 
+Every step of the game needs two values.
+-- What tube to move from
+-- What tube to move to
+
+This code has two differnt settings for how to build the neural network output.
+If SQUARED_OUTPUT == False then the final output layer of the network will an
+output size of  NUM_TUBES * 2 
+this output will be split in half. The largest logit from the first half will be move_to and the largest logit of the second half will be move_from
+
+But if SQUARED_OUTPUT == True, then the final output layer will be of 
+size NUM_TUBES * NUM_TUBES
+and the single biggest logit will be taken as the answer. For example if the largest logit is 0, then to_from will be assumed to be (0,0) and if the network outputs a 1, then to_from will be (0,1) etc
+'''
+

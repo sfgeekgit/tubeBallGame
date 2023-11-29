@@ -5,10 +5,10 @@ import shutil
 
 base_path = '../dq_runs/'
 
-# Define your configurations
+
 configs = [
-    {'batch_size': 10,
-     'num_epochs': 25000,
+    {'batch_size': 5,
+     'num_epochs': 225000,
      "DECAY": 0.88,
      "LEARNING_RATE": 1e-3,
      'loss_function': 'mse',
@@ -16,21 +16,19 @@ configs = [
      "STEP_LEARN_RATE"   : True,
      "NUM_TUBES"  : 4,
      "NUM_COLORS" : 2,
+     "TRAIN_LEVEL_TYPE":'random',
      "WRITE_LOG" : True,
      "EXHAUSTIVE" : False,
      "SQUARED_OUTPUT" : True,
      }
 ]
 
-configs.append(configs[0]) # make a 2nd copy
+#configs.append(configs[0]) # make a 2nd copy
 #configs.append(configs[0]) # make another copy
 #configs.append(configs[0]) # make another copy
 
 
 
-
-# Path to the other script
-training_script = './deepQsolver.py'
 
 # Get the number of existing subdirectories
 num_dirs = len(next(os.walk(base_path))[1])
