@@ -43,6 +43,9 @@ class TestTube:
       return True
     return False
 
+  def add_any_ball(self, ball_color: int):
+    self.contents.append(ball_color)
+
   def heuristic(self):  # average heur1 and heur2
     return self.heuristic1()
     # return (self.heuristic2() + self.heuristic1())/2
@@ -108,6 +111,23 @@ def move_allowed(test_tubes, move_from: int, move_to: int):
 
   return (True, "")
 
+def move_allowed_physics(test_tubes, move_from: int, move_to: int):
+  # is this move allowed by the laws of physics? (ignore colors)
+  cnt_of_tubes = len(test_tubes)
+  if move_from == move_to:
+    return (False, "{} is both move_from and move_to".format(move_to))
+  if move_from not in range(cnt_of_tubes):
+    return (False, "{} is not in the right range!".format(move_from))
+  if move_to not in range(cnt_of_tubes):
+    return (False, "{} is not in the right range!".format(move_to))
+
+  if test_tubes[move_to].is_full():
+    return (False, "{} is already full".format(move_to))
+
+  if test_tubes[move_from].is_empty():
+    return (False, "{} is already empty".format(move_from))
+  
+  return (True, "")
 
 def show_tubes_up(test_tubes, clear=True):
   if clear:

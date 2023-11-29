@@ -42,8 +42,8 @@ default_values = {
     "NUM_TUBES"  : 4,
     "NUM_COLORS" : 2,
 
-    
-    "TRAIN_LEVEL_TYPE":'random',
+    "TRAIN_LEVEL_TYPE":'scramble8',
+    #"TRAIN_LEVEL_TYPE":'random',
     #"TRAIN_LEVEL_TYPE":'one_or_two',
     
     "SQUARED_OUTPUT" : True,
@@ -311,6 +311,10 @@ for stepnum in range(NUM_EPOCHS):
             level.load_level_rand(NUM_COLORS,NUM_TUBES)
         elif TRAIN_LEVEL_TYPE == 'one_or_two':
             level.load_demo_one_or_two_move_rand(NUM_TUBES)
+        elif TRAIN_LEVEL_TYPE == 'scramble8':
+            lvl = level_gen.gen_solved_level(NUM_COLORS, NUM_TUBES)
+            lvl = level_gen.scramble_level(lvl, 8) # the 8 in scramble8
+            level.load_lvl(lvl)
         else:
             level.load_demo_one_or_two_move_rand(NUM_TUBES)
         test_tubes = level.get_tubes()
@@ -530,7 +534,10 @@ if TRAIN_LEVEL_TYPE == 'random':
     level.load_level_rand(NUM_COLORS,NUM_TUBES)
 elif TRAIN_LEVEL_TYPE == 'one_or_two':
     level.load_demo_one_or_two_move_rand(NUM_TUBES)
-    
+elif TRAIN_LEVEL_TYPE == 'scramble8':
+    lvl = level_gen.gen_solved_level(NUM_COLORS, NUM_TUBES)
+    lvl = level_gen.scramble_level(lvl, 8) # the 8 in scramble8
+    level.load_lvl(lvl)    
 else:
     level.load_demo_one_or_two_move_rand(NUM_TUBES)
 

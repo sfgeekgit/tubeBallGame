@@ -1,4 +1,4 @@
-from test_tube import TestTube, TUBE_LENGTH, move_allowed, show_tubes_up    # , *
+from test_tube import TestTube, TUBE_LENGTH, move_allowed, show_tubes_up, move_allowed_physics    # , *
 from random import shuffle
 
 from bfs import a_star_search
@@ -193,7 +193,19 @@ def tubes_to_list(tubes, max_tubes=4):
             out.append(9)
     return out            
 
-    
+
+def scramble_level(lvl, num_steps):
+    num_tu = len(lvl)
+    for _ in range(num_steps):
+        possible = False
+        while not possible:
+            move_from = random.randint(0,num_tu -1)
+            move_to   = random.randint(0,num_tu -1)
+            possible = move_allowed_physics(lvl, move_from, move_to)[0]
+        lvl[move_to].add_any_ball(lvl[move_from].pop_top())
+    shuffle(lvl)
+    return lvl
+
               
 def gen_solved_level(num_colors, num_tubes):
     if num_tubes < num_colors:
@@ -203,8 +215,7 @@ def gen_solved_level(num_colors, num_tubes):
     for i in range(num_colors):
         this_list = []
         for j in range(TUBE_LENGTH):
-            #this_list.append(i+1) # there is no color zero!
-            this_list.append(i)    # now there is 
+            this_list.append(i+1) # avoid zero
         out.append(TestTube(this_list))
 
 
@@ -214,8 +225,12 @@ def gen_solved_level(num_colors, num_tubes):
     return out
 
 #level = GameLevel()
-#for _ in range(3):
-#    level.load_level_rand(2,4)
+#lvl = gen_solved_level(2,4)
+#for _ in range(1):
+#    #level.load_level_rand(2,4)
+#    #lvl = level.gen_level_rand(2,4)
+#    lvl = scramble_level(lvl, 2)
+#    level.load_lvl(lvl)
 #    test_tubes = level.get_tubes()
 #    show_tubes_up(test_tubes, False)
 #level.load_demo_one_or_two_move_rand(4)

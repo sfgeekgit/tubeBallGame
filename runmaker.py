@@ -8,7 +8,7 @@ base_path = '../dq_runs/'
 
 configs = [
     {'batch_size': 5,
-     'num_epochs': 225000,
+     'num_epochs': 1250000,
      "DECAY": 0.88,
      "LEARNING_RATE": 1e-3,
      'loss_function': 'mse',
@@ -16,15 +16,15 @@ configs = [
      "STEP_LEARN_RATE"   : True,
      "NUM_TUBES"  : 4,
      "NUM_COLORS" : 2,
-     "TRAIN_LEVEL_TYPE":'random',
+     "TRAIN_LEVEL_TYPE":'scramble8',
      "WRITE_LOG" : True,
      "EXHAUSTIVE" : False,
      "SQUARED_OUTPUT" : True,
      }
 ]
 
-#configs.append(configs[0]) # make a 2nd copy
-#configs.append(configs[0]) # make another copy
+configs.append(configs[0]) # make a 2nd copy
+configs.append(configs[0]) # make another copy
 #configs.append(configs[0]) # make another copy
 
 
