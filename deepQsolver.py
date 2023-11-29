@@ -4,7 +4,8 @@ import torch.nn.functional as F
 import random  
 from typing import Type
 import time
-import level_gen
+import level_gen 
+##import deepQlib
 #import matplotlib.pyplot as plt
 from collections import OrderedDict
 import sys # for command line args
@@ -33,7 +34,7 @@ else:
 
 # all of these can be overwritten by a config file
 default_values = {
-    "NUM_EPOCHS": 5000,
+    "NUM_EPOCHS": 2500,
     "DECAY": 0.88,
     "LEARNING_RATE": 1e-3,
     "BATCH_SIZE": 10,
@@ -42,9 +43,9 @@ default_values = {
     "NUM_TUBES"  : 4,
     "NUM_COLORS" : 2,
 
-    "TRAIN_LEVEL_TYPE":'scramble8',
+    #"TRAIN_LEVEL_TYPE":'scramble8',
     #"TRAIN_LEVEL_TYPE":'random',
-    #"TRAIN_LEVEL_TYPE":'one_or_two',
+    "TRAIN_LEVEL_TYPE":'one_or_two',
     
     "SQUARED_OUTPUT" : True,
     "WRITE_LOG" : True,
@@ -59,6 +60,8 @@ default_values = {
     "STEP_LEARN_RATE"   : True,
     #STEP_LEARN_RATE   : False
 
+
+    "WIN_REWARD" : 100
     
 }
 
@@ -175,7 +178,7 @@ def reward_f (state, move):   # state is list of tubes, move is tuple {to, from}
     
     reward = {}
     reward['invalid_move']    = -3
-    reward['winning_move']    = 10
+    reward['winning_move']    = WIN_REWARD
     reward['meh']             =  0
 
     test_tubes = state
@@ -336,7 +339,7 @@ for stepnum in range(NUM_EPOCHS):
         one_hots = F.one_hot(torch.tensor(to_from_sq), NUM_TUBES * NUM_TUBES)
         rand_moves.append(one_hots)
         rand_to_from = (rto, rfrom)
-        reward    =   reward_f(test_tubes, rand_to_from)
+        reward = reward_f(test_tubes, rand_to_from)
         rewards.append(torch.tensor([reward]))
         if reward == 0:
             keep_playing_list.append(torch.tensor([1]))
@@ -543,7 +546,6 @@ else:
 
 test_tubes = level.get_tubes()
 net_input = level_gen.tubes_to_list(test_tubes, NUM_TUBES)  
-log2_content += show_tubes_up(test_tubes, False)
 T = tube_list_to_tensor(net_input)
 
 
@@ -569,7 +571,7 @@ else:
     to_from = logits.argmax(1).tolist()  # do this after training
 '''
 
-
+log2_content += show_tubes_up(test_tubes, False)
 log2_content +=(f"{to_from=}\n")
 new_state = next_state(test_tubes, to_from)    
 log2_content += show_tubes_up(new_state, False)
@@ -581,7 +583,6 @@ level.load_demo_one_or_two_move_rand(NUM_TUBES)
 
 test_tubes = level.get_tubes()
 net_input = level_gen.tubes_to_list(test_tubes, NUM_TUBES)  
-log2_content += show_tubes_up(test_tubes, False)
 T = tube_list_to_tensor(net_input)
 
   
@@ -594,7 +595,7 @@ move_to = to_from_logs // NUM_TUBES
 move_from = to_from_logs - move_to * NUM_TUBES
 to_from = [move_to, move_from]
 
-
+log2_content += show_tubes_up(test_tubes, False)
 log2_content +=(f"{to_from=}\n")
 new_state = next_state(test_tubes, to_from)    
 log2_content += show_tubes_up(new_state, False)
