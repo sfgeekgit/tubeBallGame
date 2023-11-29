@@ -110,7 +110,7 @@ def breadth_first_search(head: list[TestTube]) -> list[Node]:
   return path[::-1]
 
   
-def a_star_search(head: list[TestTube]) -> list[Node]:
+def a_star_search(head: list[TestTube], quiet=True) -> list[Node]:
   # create explored set, priority queue, and final path
   explored = set()
   priority = Priority([AStarNode(head)])
@@ -136,7 +136,8 @@ def a_star_search(head: list[TestTube]) -> list[Node]:
       for child in exploring.children():
         if child not in explored:
           priority.push(child)
-  print("Total nodes explored AStar: {}".format(len(explored)))
+  if not quiet:
+    print("Total nodes explored AStar: {}".format(len(explored)))
   while goal:
     path.append(goal.test_tubes)
     goal = goal.parent

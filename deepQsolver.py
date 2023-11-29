@@ -1,28 +1,43 @@
 import torch
 import torch.nn as nn 
 import torch.nn.functional as F
-import random
+import random  
 from typing import Type
-from bfs import breadth_first_search, a_star_search
-from test_tube import TestTube, TUBE_LENGTH, move_allowed, show_tubes_up
-from colors import to_colored_ball
 import time
 import level_gen
 #import matplotlib.pyplot as plt
 from collections import OrderedDict
+import sys # for command line args
 
-config_file_path = '../dq_runs/config_3'
-config_file = config_file_path + '/config.py'
 
-load_config_file = False
-#load_config_file = True
+from bfs import breadth_first_search, a_star_search
+from test_tube import TestTube, TUBE_LENGTH, move_allowed, show_tubes_up
+from colors import to_colored_ball
+
+
+
+
+if len(sys.argv) > 1:
+    load_config_file = True    
+    config_file_path = '../dq_runs/config_' + sys.argv[1]
+    config_file = config_file_path + '/config.py'
+else:
+    load_config_file = False
+
+
+
+
+
+
+
 
 # all of these can be overwritten by a config file
 default_values = {
-    "NUM_EPOCHS": 25000,
+    "NUM_EPOCHS": 250,
     "DECAY": 0.88,
     "LEARNING_RATE": 1e-3,
-    "BATCH_SIZE": 3,
+    #"BATCH_SIZE": 10,
+    "BATCH_SIZE": 1,
 
     "NUM_TUBES"  : 4,
     #"NUM_TUBES"  : 5,
@@ -31,8 +46,6 @@ default_values = {
     "WRITE_LOG" : True,
 
     "EXHAUSTIVE" : False,
-    #"EXHAUSTIVE" : True,
-    #"SQUARED_OUTPUT" : False,
     "SQUARED_OUTPUT" : True,
 
     "loss_function" : 'MSE',
@@ -102,7 +115,7 @@ else:
     
 
     
-NN_SIZE = [INPUT_SIZE, HIDDEN_SIZE,  HIDDEN_SIZE*2, HIDDEN_SIZE, OUTPUT_SIZE]
+NN_SIZE = [INPUT_SIZE, HIDDEN_SIZE,  HIDDEN_SIZE, OUTPUT_SIZE]
 
 
 
@@ -130,21 +143,6 @@ def tube_list_to_tensor(tubes):  # this should be in another file...
 
     T = torch.tensor(t_input)
     return T.float()
-'''
-def tube_list_to_tensor(tubes):
-    dic = {}
-    dic[0] = [1,0,0]
-    dic[1] = [0,1,0]
-    dic[2] = [0,0,1]
-
-    t_input = []
-
-    for ball in tubes:
-        t_input.extend(dic[ball])
-
-    T = torch.tensor(t_input)
-    return T.float()
-'''
 
 class NeuralNetwork(nn.Module):
 
@@ -240,7 +238,7 @@ def next_state(state, move):  # move is to,from
     new_tubes[move_to].add_ball(new_tubes[move_from].pop_top())
     return new_tubes
 
-    
+'''    
 def exhaustive_search():
     all_moves = []
     for j in range(NUM_TUBES):
@@ -293,7 +291,7 @@ def exhaustive_search():
     loss_function = nn.SmoothL1Loss()
     loss = loss_function(all_predicted_q_values, all_bellman_targets)
     return loss
-
+'''
 
 
 
@@ -334,6 +332,7 @@ for stepnum in range(NUM_EPOCHS):
         ##rand_from = torch.tensor(rfrom)  # do move, and compute right side
         ##rand_to   = torch.tensor(rto)  # do move, and compute right side
 
+        assert(SQUARED_OUTPUT == True) # removed code for non-square (would really like to come back and test that later though...)
         ##if SQUARED_OUTPUT:
         to_from_sq = rto * NUM_TUBES + rfrom
         one_hots = F.one_hot(torch.tensor(to_from_sq), NUM_TUBES * NUM_TUBES)

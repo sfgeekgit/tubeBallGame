@@ -133,9 +133,6 @@ class GameLevel:
         
 
     def gen_level_rand(self, num_colors=4, num_tubes=6, allow_impossible=False):
-        # As this stands now:
-        # -- This fills the leftmost tubes and leaves the rest to the right empty
-        #   (which could potentially be a limit to the "training data" as real world problems could conceivably not be like this)
 
         if num_tubes <= num_colors:
             raise Exception("Num tubes must be more than num colors")
@@ -146,26 +143,35 @@ class GameLevel:
             for i in range(num_colors):
                 for j in range(TUBE_LENGTH):
                     all_balls.append(i+1) # no zero
-            random.shuffle(all_balls)
 
+
+            # add some temp "padding" to randomize the empty slots
+            num_blank_spots = TUBE_LENGTH * (num_tubes - num_colors)
+            for _ in range(num_blank_spots):
+                all_balls.append(0)
+
+            random.shuffle(all_balls)
             tube_list = [all_balls[i:i + TUBE_LENGTH] for i in range(0, len(all_balls), TUBE_LENGTH)]
-            for k in range(num_tubes - num_colors):
-                tube_list.append([])
+            tube_list = [[ball for ball in tube if ball != 0] for tube in tube_list]  # remove the padding
 
 
             out = []
             for tt in tube_list:
                 out.append(TestTube(tt))
 
-            solution = a_star_search(out)
-            # solution will be False if there is none, list of path if it is possible
+                
+            if allow_impossible:
+                solution = True
+            else: 
+                solution = a_star_search(out)
+                # solution will be False if there is none, list of path if it is possible
+                #if solution: print ("A star path len " , len(solution))
             
-            if solution or allow_impossible:
+            if solution:  # or allow_impossible:
                 return out                
             else:
                 out = False # loop again!
                 
-
 
 
 def tubes_to_list(tubes, max_tubes=4):
@@ -208,5 +214,9 @@ def gen_solved_level(num_colors, num_tubes):
     return out
 
 #level = GameLevel()
+#for _ in range(3):
+#    level.load_level_rand(2,4)
+#    test_tubes = level.get_tubes()
+#    show_tubes_up(test_tubes, False)
 #level.load_demo_one_or_two_move_rand(4)
 #level.load_demo_one_or_two_move_rand(5)

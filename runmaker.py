@@ -7,11 +7,10 @@ base_path = '../dq_runs/'
 
 # Define your configurations
 configs = [
-    {'batch_size': 4,
-     'num_epochs': 5000,
+    {'batch_size': 10,
+     'num_epochs': 25000,
      "DECAY": 0.88,
      "LEARNING_RATE": 1e-3,
-     "BATCH_SIZE": 3,
      'loss_function': 'mse',
      "DYN_LEARNING_RATE" : False,
      "STEP_LEARN_RATE"   : True,
@@ -24,8 +23,8 @@ configs = [
 ]
 
 configs.append(configs[0]) # make a 2nd copy
-configs.append(configs[0]) # make another copy
-configs.append(configs[0]) # make another copy
+#configs.append(configs[0]) # make another copy
+#configs.append(configs[0]) # make another copy
 
 
 
@@ -48,7 +47,10 @@ for i, config in enumerate(configs):
     # Write the configuration to a Python file
     with open(os.path.join(base_path + dir_name, 'config.py'), 'w') as f:
         for key, value in config.items():
-            f.write(f'{key.upper()} = {value}\n')
+            if isinstance(value, str):
+                f.write(f'{key.upper()} = \"{value}\"\n')
+            else:
+                f.write(f'{key.upper()} = {value}\n')
 
     # Write the configuration to a CSV file
     with open(os.path.join(base_path + dir_name, 'config.csv'), 'w') as f:
