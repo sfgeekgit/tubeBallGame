@@ -7,11 +7,13 @@ base_path = '../dq_runs/'
 
 
 configs = [
-    {'batch_size': 25,
+    {'batch_size': 10,
      'num_epochs': 250000,
-     "DECAY": 0.7,
+     "DECAY": 0.88,
      "LEARNING_RATE": 1e-3,
-     'loss_function': 'mse',
+     'loss_function': 'MSE',
+     #'loss_function': 'MAE',
+     #'loss_function': 'Huber',
      "DYN_LEARNING_RATE" : False,
      "STEP_LEARN_RATE"   : False,
      #"STEP_LEARN_RATE"   : True,
@@ -21,7 +23,7 @@ configs = [
      "WRITE_LOG" : True,
      "EXHAUSTIVE" : False,
      "SQUARED_OUTPUT" : True,
-     "WIN_REWARD" : 100
+     "WIN_REWARD" : 20
      }
 ]
 

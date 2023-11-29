@@ -53,8 +53,8 @@ default_values = {
 
 
     "loss_function" : 'MSE',
-    #loss_function : nn.L1Loss()  # MAE  mean absolute error
-    #loss_function : nn.SmoothL1Loss()  #huber 
+    #"loss_function" : 'MAE', # "nn.L1Loss()",  # MAE  mean absolute error
+    #loss_function : 'Huber' # nn.SmoothL1Loss()  #huber 
 
     "DYN_LEARNING_RATE" : False,
     "STEP_LEARN_RATE"   : True,
@@ -418,9 +418,16 @@ for stepnum in range(NUM_EPOCHS):
     if loss_function == 'MSE':
         # MSE
         loss = F.mse_loss(bellman_left, bellman_right)
-
+    elif loss_function == 'MAE':
+        loss_function = nn.L1Loss()                                                                                                          
+        loss = loss_function(bellman_left, bellman_right)  
+    elif loss_function == 'Huber':
+        loss_function = nn.SmoothL1Loss()
+        loss = loss_function(bellman_left, bellman_right)        
     else:
-        loss = loss_function(bellman_left, bellman_right) 
+        print ("error no, loss function")
+        quit()
+
         
         #  Huber Loss
         #loss_function = nn.SmoothL1Loss()
