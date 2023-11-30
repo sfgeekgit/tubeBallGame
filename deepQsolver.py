@@ -34,7 +34,8 @@ else:
 
 # all of these can be overwritten by a config file
 default_values = {
-    "NUM_EPOCHS": 2500,
+    #"NUM_EPOCHS": 2500,
+    "NUM_EPOCHS": 2.5e4,
     "DECAY": 0.88,
     "LEARNING_RATE": 1e-3,
     "BATCH_SIZE": 10,
@@ -43,9 +44,11 @@ default_values = {
     "NUM_TUBES"  : 4,
     "NUM_COLORS" : 2,
 
-    #"TRAIN_LEVEL_TYPE":'scramble8',
     #"TRAIN_LEVEL_TYPE":'random',
-    "TRAIN_LEVEL_TYPE":'one_or_two',
+    #"TRAIN_LEVEL_TYPE":'one_or_two',
+    #"TRAIN_LEVEL_TYPE":'scramble',
+    "TRAIN_LEVEL_TYPE":'scram_ceil',
+    "TRAIN_LEVEL_PARAM": 10,
     
     "SQUARED_OUTPUT" : True,
     "WRITE_LOG" : True,
@@ -61,7 +64,7 @@ default_values = {
     #STEP_LEARN_RATE   : False
 
 
-    "WIN_REWARD" : 100
+    "WIN_REWARD" : 20
     
 }
 
@@ -83,6 +86,8 @@ else:
         globals()[param] = default_values[param]
 
 
+NUM_EPOCHS = int(NUM_EPOCHS)
+        
 INPUT_SIZE = ( NUM_COLORS +1 ) * NUM_TUBES * TUBE_LENGTH
 HIDDEN_SIZE = INPUT_SIZE  # why not...
 
@@ -318,12 +323,26 @@ for stepnum in range(NUM_EPOCHS):
             lvl = level_gen.gen_solved_level(NUM_COLORS, NUM_TUBES)
             lvl = level_gen.scramble_level(lvl, 8) # the 8 in scramble8
             level.load_lvl(lvl)
+
+        elif TRAIN_LEVEL_TYPE == 'scramble':
+            scram_steps = TRAIN_LEVEL_PARAM
+            lvl = level_gen.gen_solved_level(NUM_COLORS, NUM_TUBES)
+            lvl = level_gen.scramble_level(lvl, scram_steps) 
+            level.load_lvl(lvl)
+        elif TRAIN_LEVEL_TYPE == 'scram_ceil':
+            scram_steps = random.randint(1, TRAIN_LEVEL_PARAM)            
+            lvl = level_gen.gen_solved_level(NUM_COLORS, NUM_TUBES)
+            lvl = level_gen.scramble_level(lvl, scram_steps) 
+            level.load_lvl(lvl)
+
+
         else:
             level.load_demo_one_or_two_move_rand(NUM_TUBES)
         test_tubes = level.get_tubes()
         net_input = level_gen.tubes_to_list(test_tubes, NUM_TUBES)  # net_input is the state    
         T1 = tube_list_to_tensor(net_input)
         lvls.append(T1)
+
         
         # these are the values we are randomly checking with bellman
         rfrom = random.randint(0, NUM_TUBES-1)
@@ -352,7 +371,6 @@ for stepnum in range(NUM_EPOCHS):
         right_input = level_gen.tubes_to_list(new_state, NUM_TUBES)
         right_tensor = tube_list_to_tensor(right_input)
         right_ts_list.append(right_tensor)
-
 
         
     rew_stack           = torch.stack(rewards)
