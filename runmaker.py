@@ -7,11 +7,11 @@ base_path = '../dq_runs/'
 
 
 configs = [
-    {'batch_size': 10,
-     'num_epochs': 500000, # 5e5
-     #'num_epochs': 2.5e6, # 1000000
+    {'batch_size': 25,
+     'num_epochs': 500000,
+     #'num_epochs': 2.5e6, 
 
-     "DECAY": 0.7,
+     "DECAY": 0.8,
      "LEARNING_RATE": 1e-3,
      'loss_function': 'MSE',
      #'loss_function': 'MAE',
@@ -23,12 +23,12 @@ configs = [
      "NUM_COLORS" : 2,
      #"TRAIN_LEVEL_TYPE":'scramble8',
      "TRAIN_LEVEL_TYPE":'scram_ceil',
-     "TRAIN_LEVEL_PARAM": 12,
+     "TRAIN_LEVEL_PARAM": 20,
 
      "WRITE_LOG" : True,
      "EXHAUSTIVE" : False,
      "SQUARED_OUTPUT" : True,
-     "WIN_REWARD" : 20
+     "WIN_REWARD" : 100
      }
 ]
 

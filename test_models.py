@@ -53,28 +53,29 @@ def run_2x4_tests(model_file_path):
 import glob
 
 model_paths = glob.glob('../dq_runs/config_*/model.pth')
+model_paths.sort() 
+#model_paths = model_paths[15:]
+# remove the first few models they are garbage
+
 
 results = {}
 extra_moves = {}
 
-for model_path in model_paths:
+for idx, model_path in enumerate(model_paths):
     config_id = model_path.split('/')[-2]
+    if len(config_id) < 9: # single digit config id, skip these
+        continue
     res = run_2x4_tests(model_path)
     results[config_id] = res[0]
     extra_moves[config_id] = res[1]
 
 sorted_results = dict(sorted(results.items(), key=lambda item: item[1], reverse=True))
-sorted_by_key = dict(sorted(results.items(), key=lambda item: item[0], reverse=True))
-print(sorted_by_key)
-
-
-
 
 import csv
 
-for idx, config_id in enumerate(sorted_results.keys()):
-#for idx, config_id in enumerate(sorted_by_key.keys()):
-    if idx >= 30:
+#for idx, config_id in enumerate(sorted_results.keys()):
+for idx, config_id in enumerate(results.keys()):
+    if idx >= 60:
         break
     config_file_path = f'../dq_runs/{config_id}/config.csv'
     with open(config_file_path, 'r') as f:
@@ -83,6 +84,13 @@ for idx, config_id in enumerate(sorted_results.keys()):
     num_epochs = config_dict.get('num_epochs', 'Not found')
     num_epochs = int(float(num_epochs))
     batch_size = int(float(config_dict.get('batch_size', 'Not found')))
-    print(f"{config_id}: {sorted_results[config_id]}% passed, {extra_moves[config_id]} avg extra moves, ep*batch: {num_epochs * batch_size}")
+    win_reward = float(config_dict.get('WIN_REWARD', 10))
+    loss_fun = config_dict.get('loss_function', 'mSe')
+    lvl_type = config_dict.get('TRAIN_LEVEL_TYPE', 'one_or_two')
+
+
+
+    # {extra_moves[config_id]} avg extra moves,
+    print(f"{config_id}: {sorted_results[config_id]}% passed, {config_dict['DECAY']=} {win_reward=} \t{lvl_type=} \tep*batch: {num_epochs * batch_size}")
 
 
