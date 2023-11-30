@@ -6,7 +6,7 @@ import time
 import level_gen
 
 
-SLEEP_TIME=0.2
+SLEEP_TIME=0.6
 
 def generate_level(hard_mode=True):
   level = level_gen.GameLevel()
@@ -74,8 +74,8 @@ def main():
   #quit()
 
   
-  solver_solve(test_tubes)
-  #player_solve(test_tubes)
+  #solver_solve(test_tubes)
+  player_solve(test_tubes)
 
 if __name__ == '__main__':
   main()

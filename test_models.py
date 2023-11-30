@@ -56,7 +56,7 @@ model_paths = glob.glob('../dq_runs/config_*/model.pth')
 model_paths.sort() 
 #model_paths = model_paths[15:]
 # remove the first few models they are garbage
-
+#model_paths = model_paths[:48] + model_paths[66:]
 
 results = {}
 extra_moves = {}
@@ -75,7 +75,7 @@ import csv
 
 #for idx, config_id in enumerate(sorted_results.keys()):
 for idx, config_id in enumerate(results.keys()):
-    if idx >= 60:
+    if idx >= 260:
         break
     config_file_path = f'../dq_runs/{config_id}/config.csv'
     with open(config_file_path, 'r') as f:
@@ -85,12 +85,13 @@ for idx, config_id in enumerate(results.keys()):
     num_epochs = int(float(num_epochs))
     batch_size = int(float(config_dict.get('batch_size', 'Not found')))
     win_reward = float(config_dict.get('WIN_REWARD', 10))
+    decay = float(config_dict.get('DECAY', .95))
     loss_fun = config_dict.get('loss_function', 'mSe')
     lvl_type = config_dict.get('TRAIN_LEVEL_TYPE', 'one_or_two')
 
 
 
     # {extra_moves[config_id]} avg extra moves,
-    print(f"{config_id}: {sorted_results[config_id]}% passed, {config_dict['DECAY']=} {win_reward=} \t{lvl_type=} \tep*batch: {num_epochs * batch_size}")
+    print(f"{config_id}: {sorted_results[config_id]}% passed, {decay=}, {win_reward=}, {batch_size=}, \t{lvl_type=} \tep*batch: {num_epochs * batch_size}")
 
 

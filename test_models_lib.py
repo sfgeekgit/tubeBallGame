@@ -3,6 +3,8 @@ from bfs import breadth_first_search, a_star_search
 import level_gen
 import torch
 import deepQlib
+import test_models_lib
+
 
 
 NUM_TUBES = 4
