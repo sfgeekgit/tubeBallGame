@@ -13,7 +13,8 @@ if len(sys.argv) > 1:
 else:
     model_file_path = '../dq_runs/config_14/model.pth'
 
-
+level_path = False
+#level_path = '../tubeballgame_stuff/easy_24_lvls/1.lvl'
 
 mynet = torch.jit.load(model_file_path)
 
@@ -61,8 +62,11 @@ def next_state(state, move):  # move is to,from
 
 level = level_gen.GameLevel()
 
-#level.load_demo_one_or_two_move_rand(NUM_TUBES)
-level.load_demo_easy()
+if level_path:
+    level.load_from_disk(level_path)
+else:
+    #level.load_demo_one_or_two_move_rand(NUM_TUBES)
+    level.load_demo_easy()
 
 test_tubes = level.get_tubes()
 show_tubes_up(test_tubes, False)
@@ -82,7 +86,6 @@ while (reward == 0) and steps < 4+ (a_star_len * 2):
     print ("Step ", steps)
     net_input = level_gen.tubes_to_list(test_tubes, NUM_TUBES)  
     T = tube_list_to_tensor(net_input)
-
 
   
     logits = mynet(T)  # that calls forward because __call__ is coded magic backend
@@ -113,7 +116,7 @@ while (reward == 0) and steps < 4+ (a_star_len * 2):
         
     elif reward == 10:
         print (f"You did it! Solved in {steps} steps. (Best possible is {a_star_len})\n\nFIREWORKS\n\n\n")
-    
+        
 
 
 

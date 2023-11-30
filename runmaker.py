@@ -8,8 +8,8 @@ base_path = '../dq_runs/'
 
 configs = [
     {'batch_size': 10,
-     #'num_epochs': 500000, # 5e5
-     'num_epochs': 1e6, # 1000000
+     'num_epochs': 500000, # 5e5
+     #'num_epochs': 2.5e6, # 1000000
 
      "DECAY": 0.7,
      "LEARNING_RATE": 1e-3,
@@ -23,7 +23,7 @@ configs = [
      "NUM_COLORS" : 2,
      #"TRAIN_LEVEL_TYPE":'scramble8',
      "TRAIN_LEVEL_TYPE":'scram_ceil',
-     "TRAIN_LEVEL_PARAM": 25,
+     "TRAIN_LEVEL_PARAM": 12,
 
      "WRITE_LOG" : True,
      "EXHAUSTIVE" : False,

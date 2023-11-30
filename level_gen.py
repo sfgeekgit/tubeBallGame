@@ -43,8 +43,8 @@ class GameLevel:
     def load_lvl(self, level):
         self.__init__(level)
     
-    def load_from_disk(self, filename, dir_path='./lvls/'):
-        file_path = dir_path + filename
+    def load_from_disk(self, file_path):
+        #file_path = dir_path + filename
         with open(file_path, 'r') as f:
             content = f.read()
         data = eval(content)
