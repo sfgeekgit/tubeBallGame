@@ -7,8 +7,8 @@ base_path = '../dq_runs/'
 
 
 configs = [
-    {'batch_size': 25,
-     'num_epochs': 35000,
+    {'batch_size': 100,
+     'num_epochs': 25000,
      #'num_epochs': 2.5e6, 
 
      "DECAY": 0.8,
