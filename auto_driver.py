@@ -8,7 +8,7 @@ Script to step through configs and train them NOT all at the same time, so I can
 
 # this copy of script runs every 3rd or every 4th or whatever. Edit as needed. (so can run this script 2x or 3x in parallel)
 mod_fact = 0
-
+mod_base = 1 # 2 to do even/odd, or 3 to do every 3rd, 5 for every 5th etc
 
 # Path to the directory to check
 dir_path = '/Users/nick/dq_runs/'
@@ -26,7 +26,7 @@ for subdir in dirs:
         # Check if the subdirectory contains a file named 'model.pth'
         if 'model.pth' not in os.listdir(subdir_path):
             id_number = int(subdir.split('_')[-1])
-            if id_number % 3 == mod_fact:
+            if id_number % mode_base == mod_fact:
                 print(f"Missing model.pth in {subdir_path}, id number {id_number}")
                 print(f"Running {subdir_path}")
                 this_cmd = script_path + '' + str(id_number)
