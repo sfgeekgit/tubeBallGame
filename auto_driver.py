@@ -26,7 +26,7 @@ for subdir in dirs:
         # Check if the subdirectory contains a file named 'model.pth'
         if 'model.pth' not in os.listdir(subdir_path):
             id_number = int(subdir.split('_')[-1])
-            if id_number % mode_base == mod_fact:
+            if id_number % mod_base == mod_fact:
                 print(f"Missing model.pth in {subdir_path}, id number {id_number}")
                 print(f"Running {subdir_path}")
                 this_cmd = script_path + '' + str(id_number)
