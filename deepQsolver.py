@@ -36,9 +36,9 @@ else:
 default_values = {
     #"NUM_EPOCHS": 2500,
     "NUM_EPOCHS": 2.5e4,
-    "DECAY": 0.88,
+    "DECAY": 0.8,
     "LEARNING_RATE": 1e-3,
-    "BATCH_SIZE": 10,
+    "BATCH_SIZE": 1,
     "STEP_BATCH": True,
 
     "NUM_TUBES"  : 4,
@@ -46,9 +46,10 @@ default_values = {
 
     #"TRAIN_LEVEL_TYPE":'random',
     #"TRAIN_LEVEL_TYPE":'one_or_two',
+    "TRAIN_LEVEL_TYPE":'load_demo_one_move_rand',
     #"TRAIN_LEVEL_TYPE":'scramble',
-    "TRAIN_LEVEL_TYPE":'scram_ceil',
-    "TRAIN_LEVEL_PARAM": 10,
+    #"TRAIN_LEVEL_TYPE":'scram_ceil',
+    #"TRAIN_LEVEL_PARAM": 10,
     
     "SQUARED_OUTPUT" : True,
     "WRITE_LOG" : True,
@@ -60,11 +61,11 @@ default_values = {
     #loss_function : 'Huber' # nn.SmoothL1Loss()  #huber 
 
     "DYN_LEARNING_RATE" : False,
-    "STEP_LEARN_RATE"   : True,
-    #STEP_LEARN_RATE   : False
+    #"STEP_LEARN_RATE"   : True,
+    "STEP_LEARN_RATE"   : False,
 
 
-    "WIN_REWARD" : 20
+    "WIN_REWARD" : 10
     
 }
 
@@ -90,7 +91,6 @@ NUM_EPOCHS = int(NUM_EPOCHS)
         
 INPUT_SIZE = ( NUM_COLORS +1 ) * NUM_TUBES * TUBE_LENGTH
 HIDDEN_SIZE = INPUT_SIZE  # why not...
-
 
 
 if SQUARED_OUTPUT:
@@ -319,6 +319,8 @@ for stepnum in range(NUM_EPOCHS):
             level.load_level_rand(NUM_COLORS,NUM_TUBES)
         elif TRAIN_LEVEL_TYPE == 'one_or_two':
             level.load_demo_one_or_two_move_rand(NUM_TUBES)
+        elif TRAIN_LEVEL_TYPE == 'load_demo_one_move_rand':
+            level.load_demo_one_move_rand(NUM_TUBES)
         elif TRAIN_LEVEL_TYPE == 'scramble8':
             lvl = level_gen.gen_solved_level(NUM_COLORS, NUM_TUBES)
             lvl = level_gen.scramble_level(lvl, 8) # the 8 in scramble8
