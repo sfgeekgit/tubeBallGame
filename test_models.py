@@ -65,13 +65,9 @@ for idx, model_path in enumerate(model_paths):
     config_id = model_path.split('/')[-2]
 
     id_num = int(config_id.split('_')[-1])
-    if id_num < 28 or (id_num > 40 and id_num < 90) or id_num > 260:
+    if not (id_num in (31,33,34)  or id_num >= 198 or (id_num >= 124 and id_num <= 137)):
         continue
 
-    print(f"Testing {id_num}")
-
-    if len(config_id) < 9: # single digit config id, skip these
-        continue
     res = run_2x4_tests(model_path)
     results[config_id] = res[0]
     extra_moves[config_id] = res[1]
