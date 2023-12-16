@@ -34,11 +34,11 @@ else:
 
 # all of these can be overwritten by a config file
 default_values = {
-    #"NUM_EPOCHS": 2500,
-    "NUM_EPOCHS": 2.5e4,
+    "NUM_EPOCHS": 2000,
+    #"NUM_EPOCHS": 2.5e4,
     "DECAY": 0.8,
     "LEARNING_RATE": 1e-3,
-    "BATCH_SIZE": 1,
+    "BATCH_SIZE": 20,
     "STEP_BATCH": True,
 
     "NUM_TUBES"  : 4,
@@ -46,10 +46,10 @@ default_values = {
 
     #"TRAIN_LEVEL_TYPE":'random',
     #"TRAIN_LEVEL_TYPE":'one_or_two',
-    "TRAIN_LEVEL_TYPE":'load_demo_one_move_rand',
-    #"TRAIN_LEVEL_TYPE":'scramble',
+    #"TRAIN_LEVEL_TYPE":'load_demo_one_move_rand',
+    "TRAIN_LEVEL_TYPE":'scramble',
     #"TRAIN_LEVEL_TYPE":'scram_ceil',
-    #"TRAIN_LEVEL_PARAM": 10,
+    "TRAIN_LEVEL_PARAM": 10,
     
     "SQUARED_OUTPUT" : True,
     "WRITE_LOG" : True,
@@ -65,7 +65,9 @@ default_values = {
     "STEP_LEARN_RATE"   : False,
 
 
-    "WIN_REWARD" : 10
+    "WIN_REWARD" : 100,
+
+    "NN_SHAPE" : ["I", "2I", "2I", "2I" ,"O"]
     
 }
 
@@ -112,7 +114,28 @@ else:
     
 
     
-NN_SIZE = [INPUT_SIZE, HIDDEN_SIZE,  HIDDEN_SIZE, OUTPUT_SIZE]
+#NN_SIZE = [INPUT_SIZE, HIDDEN_SIZE,  HIDDEN_SIZE, OUTPUT_SIZE]
+
+
+NN_SIZE = [0] * len(NN_SHAPE)
+for i in range(len(NN_SHAPE)):
+    if NN_SHAPE[i] == "I":
+        NN_SIZE[i] = INPUT_SIZE
+    elif NN_SHAPE[i] == "2I":
+        NN_SIZE[i] = INPUT_SIZE * 2
+    elif NN_SHAPE[i] == "3I":
+        NN_SIZE[i] = INPUT_SIZE * 3
+    elif NN_SHAPE[i] == "4I":
+        NN_SIZE[i] = INPUT_SIZE * 4
+    elif NN_SHAPE[i] == "H":
+        NN_SIZE[i] = HIDDEN_SIZE
+    elif NN_SHAPE[i] == "O":
+        NN_SIZE[i] = OUTPUT_SIZE
+    else:
+        print("error in NN_SHAPE")
+
+
+print(f"{NN_SIZE=}")
 
 
 

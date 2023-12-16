@@ -7,7 +7,7 @@ base_path = '../dq_runs/'
 
 
 configs = [
-    {'batch_size': 10,
+    {'batch_size': 25,
      'num_epochs': 250000,
      #'num_epochs': 2.5e6, 
 
@@ -28,7 +28,12 @@ configs = [
      "WRITE_LOG" : True,
      "EXHAUSTIVE" : False,
      "SQUARED_OUTPUT" : True,
-     "WIN_REWARD" : 100
+     "WIN_REWARD" : 100,
+
+     # "NN_SHAPE" : ["I", "I", "I" ,"O"]
+     #"NN_SHAPE" : ["I", "2I", "2I", "2I" ,"O"]
+     "NN_SHAPE" : ["I", "2I", "2I", "2I", "2I" ,"O"]
+
      }
 ]
 

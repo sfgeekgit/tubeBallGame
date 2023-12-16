@@ -63,6 +63,13 @@ extra_moves = {}
 
 for idx, model_path in enumerate(model_paths):
     config_id = model_path.split('/')[-2]
+
+    id_num = int(config_id.split('_')[-1])
+    if id_num < 28 or (id_num > 40 and id_num < 90) or id_num > 260:
+        continue
+
+    print(f"Testing {id_num}")
+
     if len(config_id) < 9: # single digit config id, skip these
         continue
     res = run_2x4_tests(model_path)
@@ -75,7 +82,7 @@ import csv
 
 #for idx, config_id in enumerate(sorted_results.keys()):
 for idx, config_id in enumerate(results.keys()):
-    if idx >= 260:
+    if idx >= 9999:
         break
     config_file_path = f'../dq_runs/{config_id}/config.csv'
     with open(config_file_path, 'r') as f:

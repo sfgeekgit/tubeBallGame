@@ -8,7 +8,7 @@ Script to step through configs and train them NOT all at the same time, so I can
 
 # this copy of script runs every 3rd or every 4th or whatever. Edit as needed. (so can run this script 2x or 3x in parallel)
 mod_fact = 0
-mod_base = 1 # 2 to do even/odd, or 3 to do every 3rd, 5 for every 5th etc
+mod_base = 2 # 2 to do even/odd, or 3 to do every 3rd, 5 for every 5th etc
 
 # Path to the directory to check
 dir_path = '/Users/nick/dq_runs/'
