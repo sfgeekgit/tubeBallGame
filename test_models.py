@@ -91,10 +91,11 @@ for idx, config_id in enumerate(results.keys()):
     decay = float(config_dict.get('DECAY', .95))
     loss_fun = config_dict.get('loss_function', 'mSe')
     lvl_type = config_dict.get('TRAIN_LEVEL_TYPE', 'one_or_two')
+    nn_shape = config_dict.get('NN_SHAPE', "['I', 'I', 'I', 'O']")
 
 
 
     # {extra_moves[config_id]} avg extra moves,
-    print(f"{config_id}: {sorted_results[config_id]}% passed, {decay=}, {win_reward=}, {batch_size=}, \t{lvl_type=} \tep*batch: {num_epochs * batch_size}")
+    print(f"{config_id}: {sorted_results[config_id]}% pass, dec={decay}, w_rew={win_reward}, batch={batch_size}, \t{lvl_type=} \tnn={nn_shape} \tep*batch: {num_epochs * batch_size}")
 
 

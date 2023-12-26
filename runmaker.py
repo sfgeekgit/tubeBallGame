@@ -8,8 +8,9 @@ base_path = '../dq_runs/'
 
 configs = [
     {'batch_size': 25,
-     'num_epochs': 250000,
+     #'num_epochs': 250000,
      #'num_epochs': 2.5e6, 
+     'num_epochs': 5e6, 
 
      "DECAY": 0.8,
      "LEARNING_RATE": 1e-3,
@@ -32,7 +33,9 @@ configs = [
 
      # "NN_SHAPE" : ["I", "I", "I" ,"O"]
      #"NN_SHAPE" : ["I", "2I", "2I", "2I" ,"O"]
-     "NN_SHAPE" : ["I", "2I", "2I", "2I", "2I" ,"O"]
+     #"NN_SHAPE" : ["I", "4I", "4I", "4I" ,"O"]
+     "NN_SHAPE"  :['I', '3I', '3I', '2I', 'O']
+     
 
      }
 ]

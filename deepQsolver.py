@@ -28,10 +28,6 @@ else:
 
 
 
-
-
-
-
 # all of these can be overwritten by a config file
 default_values = {
     "NUM_EPOCHS": 2000,
