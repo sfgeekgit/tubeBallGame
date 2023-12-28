@@ -13,8 +13,8 @@ NUM_TUBES = 4
 NUM_COLORS = 2
 SQUARED_OUTPUT = True
 
-
-def run_2x4_tests(model_file_path):
+# moving this to test_models_lib.py
+def old_run_2x4_tests(model_file_path):
     mynet = torch.jit.load(model_file_path)
 
     fail_cnt = 0
@@ -68,7 +68,11 @@ for idx, model_path in enumerate(model_paths):
     if not (id_num in (31,33,34)  or id_num >= 198 or (id_num >= 124 and id_num <= 137)):
         continue
 
-    res = run_2x4_tests(model_path)
+
+
+    #res = lib.run_2x4_tests(model_path)
+    res = lib.run_2x4_tests(model_path)
+
     results[config_id] = res[0]
     extra_moves[config_id] = res[1]
 
