@@ -11,6 +11,38 @@ NUM_TUBES = 4
 NUM_COLORS = 2
 SQUARED_OUTPUT = True
 
+def run_2x4_tests(model_file_path):
+    mynet = torch.jit.load(model_file_path)
+
+    fail_cnt = 0
+    pass_cnt = 0
+    xtra_move_cnt = 0
+
+    num_test_levels = 100
+    for i in range(1,num_test_levels):
+
+        level_path = '../tubeballgame_stuff/easy_24_lvls/' + str(i) + '.lvl'
+        level = level_gen.GameLevel()
+        
+        level.load_from_disk(level_path)
+        
+        run_res = run_test(mynet, level)
+        if run_res == -1:
+            fail_cnt += 1
+        else:
+            pass_cnt += 1
+            xtra_move_cnt += run_res
+
+
+    pass_perc = int(100 * pass_cnt / num_test_levels)
+    #print (f"{pass_perc} perecnt passed!")
+    avg_xtra_moves = 0
+    if pass_cnt > 1:
+        avg_xtra_moves = xtra_move_cnt / pass_cnt # round this to 2 decimal places
+        avg_xtra_moves = round(avg_xtra_moves, 2)
+    #    print (f"{xtra_move_cnt} above optimal (lower is better)")
+    
+    return (pass_perc, avg_xtra_moves)
 
 def tube_list_to_tensor(tubes):  # this should be in another file...
     dic = {}
