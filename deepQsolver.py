@@ -17,14 +17,30 @@ from colors import to_colored_ball
 
 
 
+            
+load_config_file = False    
+if len(sys.argv) == 2:
+    try:
+        argoneint = int(sys.argv[1])
+        if argoneint > 0:
+            load_config_file = True    
+            config_file_path = '../dq_runs/config_' + sys.argv[1]
+            config_file = config_file_path + '/config.py'
 
-if len(sys.argv) > 1:
-    load_config_file = True    
-    config_file_path = '../dq_runs/config_' + sys.argv[1]
-    config_file = config_file_path + '/config.py'
-else:
-    load_config_file = False
+    except:
+        load_config_file = False
 
+if len(sys.argv) >= 3 and sys.argv[2] == 'sweep':
+    try:
+        argoneint = int(sys.argv[1])
+        if argoneint > 0:
+            load_config_file = True    
+            config_file_path = '../py/wandb_ball_runs/sweep_con_' + sys.argv[1]
+            config_file = config_file_path + '/config.py'
+
+    except:
+        print("error in sweep mode")
+        load_config_file = False
 
 
 
@@ -51,6 +67,8 @@ default_values = {
     "WRITE_LOG" : True,
     "EXHAUSTIVE" : False,
 
+    "CON_NUM" : 0, # which config number is this? 0 means not a config file
+
 
     "loss_function" : 'MSE',
     #"loss_function" : 'MAE', # "nn.L1Loss()",  # MAE  mean absolute error
@@ -64,6 +82,7 @@ default_values = {
     "WIN_REWARD" : 100,
 
     "NN_SHAPE" : ["I", "2I", "2I", "2I" ,"O"]
+    
     
 }
 
@@ -83,6 +102,7 @@ else:
    config_file_path = False
    for param in default_values.keys():    
         globals()[param] = default_values[param]
+
 
 
 NUM_EPOCHS = int(NUM_EPOCHS)
@@ -132,6 +152,13 @@ for i in range(len(NN_SHAPE)):
 
 
 print(f"{NN_SIZE=}")
+
+con_num_read = 0
+try:
+    con_num_read = CON_NUM
+except:
+    con_num_read = 0
+
 
 
 
@@ -430,7 +457,7 @@ for stepnum in range(NUM_EPOCHS):
     
 
     if SQUARED_OUTPUT:
-        if stepnum % 800 == 0:
+        if stepnum % 1800 == 0:
             print(f"{LEARNING_RATE=}")
             net_input = level_gen.tubes_to_list(test_tubes, NUM_TUBES)
             T = tube_list_to_tensor(net_input)
@@ -483,11 +510,12 @@ for stepnum in range(NUM_EPOCHS):
     optimizer.step()
 
 
-    if stepnum % 20 == 19:
-        loss_med_rec.append(sorted(loss_rec[-18:])[9])
+    #if stepnum % 20 == 19:
+    #    loss_med_rec.append(sorted(loss_rec[-18:])[9])
     
-    if stepnum %100==0:
-        print(stepnum , loss.item())
+    if stepnum %300==0:
+        percent_done = int(100 * stepnum / NUM_EPOCHS)
+        print(f"{stepnum} of {NUM_EPOCHS} {percent_done}% run {con_num_read} Loss" , loss.item())
         
         if DYN_LEARNING_RATE:
             if stepnum > 50:
@@ -529,8 +557,14 @@ print(f"{LEARNING_RATE=}")
 #plt.show()
 
 
+print()
+print()
+print()
+print(f"{WRITE_LOG=}")
+print(f"{config_file_path=}")
 
 if WRITE_LOG:
+    print ("writing log")
     ep_times_batch =  NUM_EPOCHS * BATCH_SIZE
     current_time = time.strftime("%Y-%m-%d-%H:%M:%S")
     log_content = (f"\n\n--------\nFinished run at {current_time}")
@@ -552,6 +586,9 @@ if WRITE_LOG:
     with open(log_file_path, 'a') as f:
         f.write(log_content)
 
+
+
+    # if config read from a file, save the model to that directory
     if config_file_path:
         log_file = config_file_path + '/run_log.txt'
         with open(log_file, 'a') as f:
@@ -559,11 +596,25 @@ if WRITE_LOG:
         save_path = config_file_path + '/model.pt'
         torch.save(mynet.state_dict(), save_path)
 
+        print("\n\nsaving model to ", save_path)
+        print("\n\nmynet", mynet)
 
         #print("my net", mynet)
         scripted_model = torch.jit.script(mynet)
         save_path = config_file_path + '/model.pth'
         torch.jit.save(scripted_model, save_path)
+
+        print("heelo   ")
+        # now, if it's part of a "sweep" run a test on the model
+        if len(sys.argv) >= 3 and sys.argv[2] == 'sweep':
+            print("now test")
+            # err... no, run this in the sweep tester
+
+
+
+
+
+
 
 
 

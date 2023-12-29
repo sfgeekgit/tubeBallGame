@@ -10,7 +10,8 @@ configs = [
     {'batch_size': 25,
      #'num_epochs': 250000,
      #'num_epochs': 2.5e6, 
-     'num_epochs': 5e6, 
+     #'num_epochs': 5e6, 
+     'num_epochs': 5e2, 
 
      "DECAY": 0.8,
      "LEARNING_RATE": 1e-3,
@@ -41,7 +42,7 @@ configs = [
 ]
 
 configs.append(configs[0]) # make a 2nd copy
-configs.append(configs[0]) # make another copy
+#configs.append(configs[0]) # make another copy
 #configs.append(configs[0]) # make another copy
 
 

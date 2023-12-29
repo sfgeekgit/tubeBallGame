@@ -1,18 +1,22 @@
 # Import the W&B Python Library and log into W&B
 import wandb
 
+import os
+import subprocess
+
+#import csv
+
 wandb.login()
 
 
-# to do, these are not itteralbe. so... is there a way to set them as constant? 
-# yes like this:
-#parameters_dict.update({
-#    'epochs': {'value': 1}  
-#    })
-
 default_values = {
-    "NUM_EPOCHS": 2000, # 2000 == 2e3
-    #"NUM_EPOCHS": 2e5, # 2e5 == 200,000
+    #"NUM_EPOCHS": 2000, # will be overwritten by num_runsteps # 2000 == 2e3  # 2e5 == 200,000
+    #"NUM_RUNSTEPS": 5e4, # 5e4== 50,000
+    "NUM_RUNSTEPS": 2e7, # 2e7== 20,000,000  
+    # note! NUM_RUNSTEPS is batch size * num epochs.  
+    # NUM_EPOCHS here will be overwritten by NUM_RUNSTEPS / BATCH_SIZE
+
+
 
     "DECAY": 0.8,
     "LEARNING_RATE": 1e-3,
@@ -47,19 +51,70 @@ default_values = {
     "NN_SHAPE" : ["I", "2I", "2I", "2I" ,"O"]   
 }
 
+base_path = '../py/wandb_ball_runs/'
 
-
-# 1: Define objective/training function
+# create a directory for this run, and write the config to a file
+# then run the model and save the model to the directory
 def objective(config):
+
+    script_path = 'deepQsolver.py'
+    #id_number = wandb.run.id    # I donno, maybe this is a good id number to use?
+
+
+    num_dirs = len(next(os.walk(base_path))[1])
+    con_num = num_dirs + 100
+    dir_name = f'sweep_con_{con_num}'
+    os.makedirs(base_path + dir_name, exist_ok=False)
+    config['con_num'] = con_num
+    #config['dir_name'] = dir_name
+    dir_path = base_path + dir_name
+
     print("in obj");
     print(f"{config=}")
     #print(f"{config.NN_SHAPE=}")
     print(f"\n{config.DECAY=}\n")
+    ##print(f"\n{config.NUM_EPOCHS=}\n")
+    print(f"\n{config.NUM_RUNSTEPS=}\n")
+    print(f"\n{config.BATCH_SIZE=}\n")
 
-    print("\n\nCall a function to run the model and return the score\n\n\n")
+    NUM_EPOCHS = int(config.NUM_RUNSTEPS / config.BATCH_SIZE)
+    config.NUM_EPOCHS = NUM_EPOCHS
+    print(f"\n{config.NUM_EPOCHS=}\n")
 
-    #score = config.x**3 + config.y
-    score = 1
+
+
+
+    # Write the configuration to a Python file
+    with open(os.path.join(base_path + dir_name, 'config.py'), 'w') as f:
+        for key, value in config.items():
+            if isinstance(value, str):
+                f.write(f'{key.upper()} = \"{value}\"\n')
+            else:
+                f.write(f'{key.upper()} = {value}\n')
+
+
+    ## Write the configuration to a CSV file
+    #with open(os.path.join(base_path + dir_name, 'config.csv'), 'w') as f:
+    #    writer = csv.writer(f)
+    #    for key, value in config.items():
+    #        writer.writerow([key, value])
+
+    print('run the deepQsolver !');
+    subprocess.call(['python3', script_path, str(con_num), 'sweep'])
+    # wait for it to run..
+    print('done training, now load the model and run the test levels')
+    import test_models_lib as lib
+    model_path = f'{dir_path}/model.pth'
+    print(f"{model_path=}")
+
+    print('run the test levels !');    
+    res = lib.run_2x4_tests(model_path)
+    print(f"{res=}")
+    print(f"{res[0]=}")
+    print(f"{res[1]=}")
+
+
+    score = res[0]
 
     return score
 
@@ -70,7 +125,7 @@ def main():
     wandb.init(project="trial-learn")
     score = objective(wandb.config)
 
-#    wandb.log({"score": score})
+    wandb.log({"score": score})
 
 
 # 2: Define the search space
@@ -81,42 +136,30 @@ sweep_configuration = {
     "metric": {"goal": "minimize", "name": "score"},
 
     "parameters": {
-        #"NUM_EPOCHS": 2000, # 2000 == 2e3
-        #"NUM_EPOCHS": 2e5, # 2e5 == 200,000
-
-        "x": {"max": 0.1, "min": 0.01},
-        "y": {"values": [1, 3, 7]},
 
         #"DECAY": 0.8,
-        "DECAY": {"values": [0.8, 0.9, 0.95, 0.99]},
+        "DECAY": {"values": [0.8, 0.85, 0.9, 0.95, 0.99]},
         #"LEARNING_RATE": 1e-3, # 1e-3 == 0.001
         #"BATCH_SIZE": 20,   
+        "BATCH_SIZE": {"values": [8,16,25,32,40,64,90]},
 
         "NN_SHAPE" : {"values":[
             ["I",  "I",  "I",  "I" ,"O"],
             ["I",  "I", "2I",  "I" ,"O"],
             ["I", "2I", "2I", "2I" ,"O"],
             ["I", "3I", "3I", "3I" ,"O"],
+            ["I",  "I",  "I", "3I" ,"O"],
             ["I",  "I", "3I",  "I" ,"O"],
+            ["I",  "3I", "I",  "I" ,"O"],
             ["I",  "I", "2I", "2I" ,"O"]
         ]},  
 
     },
 }
+   
 
 
-#        "NN_SHAPE" : {"values":[
-#            ["I",  "I",  "I",  "I" ,"O"],
-#            ["I",  "I", "2I",  "I" ,"O"],
-#            ["I", "2I", "2I", "2I" ,"O"],
-#            ["I", "3I", "3I", "3I" ,"O"],
-#            ["I",  "I", "3I",  "I" ,"O"],
-#            ["I",  "I", "2I", "2I" ,"O"]
-#        ]},   
-
-
-
-print(f"{sweep_configuration=}")
+#print(f"{sweep_configuration=}")
 for key in default_values:
     #if key not in sweep_configuration['parameters']:
     #    sweep_configuration['parameters'][key] = {'value': default_values[key]}
@@ -128,12 +171,11 @@ for key in default_values:
 #    'epochs': {'value': 1}  
 #    })
 
-##sweep_configuration['parameters'] = sweep_configuration['parameters'] | default_values
-print(f"{sweep_configuration=}")
+#print(f"{sweep_configuration=}")
 
 
 # 3: Start the sweep
 sweep_id = wandb.sweep(sweep=sweep_configuration, project="trial-learn")
 print(f"{sweep_id=}")
 
-wandb.agent(sweep_id, function=main, count=2)
+wandb.agent(sweep_id, function=main, count=6)
