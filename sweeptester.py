@@ -9,6 +9,8 @@ import subprocess
 wandb.login()
 
 
+project_name = "dec_balls"
+
 default_values = {
     #"NUM_EPOCHS": 2000, # will be overwritten by num_runsteps # 2000 == 2e3  # 2e5 == 200,000
     #"NUM_RUNSTEPS": 5e4, # 5e4== 50,000
@@ -120,9 +122,11 @@ def objective(config):
 
 
 def main():
+    global project_name
+
     print("enter main")
     #wandb.init(project="first-test-tubeballgame")
-    wandb.init(project="trial-learn")
+    wandb.init(project=project_name)
     score = objective(wandb.config)
 
     wandb.log({"score": score})
@@ -138,20 +142,24 @@ sweep_configuration = {
     "parameters": {
 
         #"DECAY": 0.8,
-        "DECAY": {"values": [0.8, 0.85, 0.9, 0.95, 0.99]},
+        "DECAY": {"values": [0.8, 0.85, 0.9, 0.95]},
         #"LEARNING_RATE": 1e-3, # 1e-3 == 0.001
         #"BATCH_SIZE": 20,   
-        "BATCH_SIZE": {"values": [8,16,25,32,40,64,90]},
+        "BATCH_SIZE": {"values": [16,25,32,40,64,90]},
 
         "NN_SHAPE" : {"values":[
             ["I",  "I",  "I",  "I" ,"O"],
-            ["I",  "I", "2I",  "I" ,"O"],
-            ["I", "2I", "2I", "2I" ,"O"],
+            ["I",  "I", "4I",  "I" ,"O"],
+            ["I", "2I", "4I", "2I" ,"O"],
             ["I", "3I", "3I", "3I" ,"O"],
-            ["I",  "I",  "I", "3I" ,"O"],
+            ["I",  "I",  "I", "4I" ,"O"],
             ["I",  "I", "3I",  "I" ,"O"],
-            ["I",  "3I", "I",  "I" ,"O"],
-            ["I",  "I", "2I", "2I" ,"O"]
+            ["I", "3I",  "I",  "I" ,"O"],
+            ["I", "4I",  "I",  "I" ,"O"],
+            ["I", "4I", "4I",  "I" ,"O"],
+            ["I",  "I", "4I", "4I" ,"O"],
+            ["I", "4I", "4I", "4I" ,"O"],
+            ["I", "2I", "4I",  "I" ,"O"]
         ]},  
 
     },
@@ -175,7 +183,7 @@ for key in default_values:
 
 
 # 3: Start the sweep
-sweep_id = wandb.sweep(sweep=sweep_configuration, project="trial-learn")
+sweep_id = wandb.sweep(sweep=sweep_configuration, project=project_name)
 print(f"{sweep_id=}")
 
 wandb.agent(sweep_id, function=main, count=6)
