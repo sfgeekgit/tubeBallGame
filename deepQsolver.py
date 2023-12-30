@@ -35,7 +35,7 @@ if len(sys.argv) >= 3 and sys.argv[2] == 'sweep':
         argoneint = int(sys.argv[1])
         if argoneint > 0:
             load_config_file = True    
-            config_file_path = '../py/wandb_ball_runs/sweep_con_' + sys.argv[1]
+            config_file_path = '../py/wandb_ball_runs/try_bayes/sweep_con_' + sys.argv[1]
             config_file = config_file_path + '/config.py'
 
     except:
