@@ -9,12 +9,12 @@ import subprocess
 wandb.login()
 
 
-project_name = "dec_balls"
+project_name = "try_bayes"
 
 default_values = {
     #"NUM_EPOCHS": 2000, # will be overwritten by num_runsteps # 2000 == 2e3  # 2e5 == 200,000
     #"NUM_RUNSTEPS": 5e4, # 5e4== 50,000
-    "NUM_RUNSTEPS": 2e7, # 2e7== 20,000,000  
+    "NUM_RUNSTEPS": 4e7, # 2e7== 20,000,000  
     # note! NUM_RUNSTEPS is batch size * num epochs.  
     # NUM_EPOCHS here will be overwritten by NUM_RUNSTEPS / BATCH_SIZE
 
@@ -53,7 +53,7 @@ default_values = {
     "NN_SHAPE" : ["I", "2I", "2I", "2I" ,"O"]   
 }
 
-base_path = '../py/wandb_ball_runs/'
+base_path = '../py/wandb_ball_runs/try_bayes/'
 
 # create a directory for this run, and write the config to a file
 # then run the model and save the model to the directory
@@ -124,8 +124,6 @@ def objective(config):
 def main():
     global project_name
 
-    print("enter main")
-    #wandb.init(project="first-test-tubeballgame")
     wandb.init(project=project_name)
     score = objective(wandb.config)
 
@@ -134,10 +132,11 @@ def main():
 
 # 2: Define the search space
 sweep_configuration = {
-    "method": "random",
+    #"method": "random",
+    "method": "bayes",
 
     # metric is not needed for random search but here for now anyway
-    "metric": {"goal": "minimize", "name": "score"},
+    "metric": {"goal": "maximize", "name": "score"},
 
     "parameters": {
 
@@ -146,6 +145,8 @@ sweep_configuration = {
         #"LEARNING_RATE": 1e-3, # 1e-3 == 0.001
         #"BATCH_SIZE": 20,   
         "BATCH_SIZE": {"values": [16,25,32,40,64,90]},
+
+        "LEARNING_RATE" : {"values": [1e-3, 5e-3, 5e-4,]}, 
 
         "NN_SHAPE" : {"values":[
             ["I",  "I",  "I",  "I" ,"O"],
@@ -186,4 +187,4 @@ for key in default_values:
 sweep_id = wandb.sweep(sweep=sweep_configuration, project=project_name)
 print(f"{sweep_id=}")
 
-wandb.agent(sweep_id, function=main, count=6)
+wandb.agent(sweep_id, function=main, count=10)
