@@ -18,7 +18,7 @@ SQUARED_OUTPUT = True
 import glob
 
 
-model_paths = glob.glob('../py/wandb_ball_runs/sweep_con_*/model.pth')
+model_paths = glob.glob('../py/wandb_ball_runs/try_bayes/sweep_con_*/model.pth')
 model_paths.sort() 
 
 
@@ -53,7 +53,7 @@ for idx, config_id in enumerate(sorted_results.keys()):
     if idx >= 9999:
         break
 #    config_file_path = f'../dq_runs/{config_id}/config.csv'
-    config_file_path = f'../py/wandb_ball_runs/{config_id}/config.py'
+    config_file_path = f'../py/wandb_ball_runs/try_bayes/{config_id}/config.py'
 
     #open the file and read the config each line is a key value pair
     with open(config_file_path, 'r') as f:
@@ -90,6 +90,8 @@ for idx, config_id in enumerate(sorted_results.keys()):
     loss_fun = config_dict.get('LOSS_FUNCTION', 'mSe')
     lvl_type = config_dict.get('TRAIN_LEVEL_TYPE', 'one_or_two')
     nn_shape = config_dict.get('NN_SHAPE', "['I', 'I', 'I', 'O']")
+    learning_rate = float(config_dict.get('LEARNING_RATE', .001))
+
 
     # sorted_results[config_id] as a 2 digit string with leading zeros if needed
     pass_perc = str(sorted_results[config_id]).zfill(2)
@@ -99,4 +101,4 @@ for idx, config_id in enumerate(sorted_results.keys()):
     
     # {extra_moves[config_id]} avg extra moves,
     #print(f"{config_id}: {pass_perc}% pass, dec={decay}, w_rew={win_reward}, batch={batch_size}, \t{lvl_type=} \tnn={nn_shape} \tep*batch: {int(num_epochs) * int(batch_size)}")
-    print(f"{config_id}: {pass_perc}% pass, dec={decay}, batch={batch_size},\tnn={nn_shape}     \tep*batch: {int(num_epochs) * int(batch_size)}")
+    print(f"{config_id}: {pass_perc}% pass, dec={decay}, learn={learning_rate}, batch={batch_size},\tnn={nn_shape}     \tep*batch: {int(num_epochs) * int(batch_size)}")

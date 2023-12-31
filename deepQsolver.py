@@ -30,12 +30,14 @@ if len(sys.argv) == 2:
     except:
         load_config_file = False
 
-if len(sys.argv) >= 3 and sys.argv[2] == 'sweep':
+#if len(sys.argv) >= 3 and sys.argv[2] == 'sweep':
+if len(sys.argv) >= 3: #  and sys.argv[2] == 'sweep':
     try:
         argoneint = int(sys.argv[1])
         if argoneint > 0:
             load_config_file = True    
-            config_file_path = '../py/wandb_ball_runs/try_bayes/sweep_con_' + sys.argv[1]
+            #config_file_path = '../py/wandb_ball_runs/try_bayes/sweep_con_' + sys.argv[1]
+            config_file_path = '../py/wandb_ball_runs/' + sys.argv[2] +  '/sweep_con_' + sys.argv[1]
             config_file = config_file_path + '/config.py'
 
     except:
@@ -603,14 +605,6 @@ if WRITE_LOG:
         scripted_model = torch.jit.script(mynet)
         save_path = config_file_path + '/model.pth'
         torch.jit.save(scripted_model, save_path)
-
-        print("heelo   ")
-        # now, if it's part of a "sweep" run a test on the model
-        if len(sys.argv) >= 3 and sys.argv[2] == 'sweep':
-            print("now test")
-            # err... no, run this in the sweep tester
-
-
 
 
 

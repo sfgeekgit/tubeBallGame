@@ -9,12 +9,15 @@ import subprocess
 wandb.login()
 
 
-project_name = "try_bayes"
+#project_name = "try_bayes"
+project_name = "1e8steps"
+
+# todo, create dir if it doesn't exist
 
 default_values = {
     #"NUM_EPOCHS": 2000, # will be overwritten by num_runsteps # 2000 == 2e3  # 2e5 == 200,000
     #"NUM_RUNSTEPS": 5e4, # 5e4== 50,000
-    "NUM_RUNSTEPS": 4e7, # 2e7== 20,000,000  
+    "NUM_RUNSTEPS": 1e8, # 2e7== 20,000,000  
     # note! NUM_RUNSTEPS is batch size * num epochs.  
     # NUM_EPOCHS here will be overwritten by NUM_RUNSTEPS / BATCH_SIZE
 
@@ -53,7 +56,7 @@ default_values = {
     "NN_SHAPE" : ["I", "2I", "2I", "2I" ,"O"]   
 }
 
-base_path = '../py/wandb_ball_runs/try_bayes/'
+base_path = '../py/wandb_ball_runs/' + project_name + '/'
 
 # create a directory for this run, and write the config to a file
 # then run the model and save the model to the directory
@@ -102,7 +105,8 @@ def objective(config):
     #        writer.writerow([key, value])
 
     print('run the deepQsolver !');
-    subprocess.call(['python3', script_path, str(con_num), 'sweep'])
+    #subprocess.call(['python3', script_path, str(con_num), 'sweep'])
+    subprocess.call(['python3', script_path, str(con_num), project_name])
     # wait for it to run..
     print('done training, now load the model and run the test levels')
     import test_models_lib as lib
@@ -146,7 +150,7 @@ sweep_configuration = {
         #"BATCH_SIZE": 20,   
         "BATCH_SIZE": {"values": [16,25,32,40,64,90]},
 
-        "LEARNING_RATE" : {"values": [1e-3, 5e-3, 5e-4,]}, 
+        "LEARNING_RATE" : {"values": [1e-3, 5e-4] },
 
         "NN_SHAPE" : {"values":[
             ["I",  "I",  "I",  "I" ,"O"],
