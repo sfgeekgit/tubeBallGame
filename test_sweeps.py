@@ -4,7 +4,7 @@ import test_models_lib as lib
 from test_tube import TestTube, TUBE_LENGTH, move_allowed, show_tubes_up
 #from colors import to_colored_ball
 #from bfs import breadth_first_search, a_star_search
-#import sys
+import sys
 
 
 
@@ -17,8 +17,19 @@ SQUARED_OUTPUT = True
 
 import glob
 
+#project = 'try_bayes'
+project = '1e8steps'
+#project = 'grid1'
 
-model_paths = glob.glob('../py/wandb_ball_runs/try_bayes/sweep_con_*/model.pth')
+if len(sys.argv) == 2:
+    project = sys.argv[1]
+    print(f"project = {project}")
+
+
+#model_paths = glob.glob('../py/wandb_ball_runs/try_bayes/sweep_con_*/model.pth')
+#model_paths = glob.glob('../py/wandb_ball_runs/1e8steps/sweep_con_*/model.pth')
+model_paths = glob.glob('../py/wandb_ball_runs/' + project + '/sweep_con_*/model.pth')
+
 model_paths.sort() 
 
 
@@ -53,7 +64,9 @@ for idx, config_id in enumerate(sorted_results.keys()):
     if idx >= 9999:
         break
 #    config_file_path = f'../dq_runs/{config_id}/config.csv'
-    config_file_path = f'../py/wandb_ball_runs/try_bayes/{config_id}/config.py'
+#    config_file_path = f'../py/wandb_ball_runs/try_bayes/{config_id}/config.py'
+    config_file_path = f'../py/wandb_ball_runs/' + project + f'/{config_id}/config.py'
+
 
     #open the file and read the config each line is a key value pair
     with open(config_file_path, 'r') as f:
@@ -101,4 +114,4 @@ for idx, config_id in enumerate(sorted_results.keys()):
     
     # {extra_moves[config_id]} avg extra moves,
     #print(f"{config_id}: {pass_perc}% pass, dec={decay}, w_rew={win_reward}, batch={batch_size}, \t{lvl_type=} \tnn={nn_shape} \tep*batch: {int(num_epochs) * int(batch_size)}")
-    print(f"{config_id}: {pass_perc}% pass, dec={decay}, learn={learning_rate}, batch={batch_size},\tnn={nn_shape}     \tep*batch: {int(num_epochs) * int(batch_size)}")
+    print(f"{config_id}: {pass_perc}% pass, dec={decay}, learn={learning_rate}, batch={batch_size}, winR={win_reward}\tnn={nn_shape}     \tep*batch: {int(num_epochs) * int(batch_size)}")
