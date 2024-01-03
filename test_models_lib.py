@@ -11,7 +11,7 @@ NUM_TUBES = 4
 NUM_COLORS = 2
 SQUARED_OUTPUT = True
 
-def run_2x4_tests(model_file_path):
+def run_2x4_tests(model_file_path, show_fails = False):
     mynet = torch.jit.load(model_file_path)
 
     fail_cnt = 0
@@ -33,6 +33,7 @@ def run_2x4_tests(model_file_path):
             pass_cnt += 1
             xtra_move_cnt += run_res
 
+        print(f"pass {pass_cnt}  fail {fail_cnt}")
 
     pass_perc = int(100 * pass_cnt / num_test_levels)
     #print (f"{pass_perc} perecnt passed!")
@@ -115,12 +116,16 @@ def run_test(model, level):
         test_tubes = new_state
             
         if reward == -3:
-            #print (f"Fail. Invalid move in step {steps}\n\n")
+            print(f"{to_from=}")
+            show_tubes_up(new_state, False)
+            print (f"Fail. Invalid move in step {steps} best possible is {a_star_len}\n")
             return -1
             
         elif reward == 10:
+
             #print (f"You did it! Solved in {steps} steps. (Best possible is {a_star_len})\n\nFIREWORKS\n\n\n")
             return steps - a_star_len
 
+    print (f"Fail. Took too long move in step {steps} (Best possible is {a_star_len}\n\n")
     # still here? Failed
     return -1
