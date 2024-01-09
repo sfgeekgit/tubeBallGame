@@ -7,7 +7,8 @@ from test_tube import TestTube, TUBE_LENGTH, move_allowed, show_tubes_up
 import sys
 
 
-
+# add = lambda x, y: x + y
+# 5 ==  add(2, 3)
 
 NUM_TUBES = 4
 NUM_COLORS = 2

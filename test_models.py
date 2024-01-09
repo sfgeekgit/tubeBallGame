@@ -13,8 +13,9 @@ NUM_TUBES = 4
 NUM_COLORS = 2
 SQUARED_OUTPUT = True
 
+'''
 # moving this to test_models_lib.py
-def old_run_2x4_tests(model_file_path):
+def run_2x4_tests(model_file_path):
     mynet = torch.jit.load(model_file_path)
 
     fail_cnt = 0
@@ -46,7 +47,7 @@ def old_run_2x4_tests(model_file_path):
     #    print (f"{xtra_move_cnt} above optimal (lower is better)")
     
     return (pass_perc, avg_xtra_moves)
-
+'''
 
 
 

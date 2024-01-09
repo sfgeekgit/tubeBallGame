@@ -19,21 +19,27 @@ def run_2x4_tests(model_file_path, show_fails = False):
     xtra_move_cnt = 0
 
     num_test_levels = 100
-    for i in range(1,num_test_levels):
-
+    for i in range(1,num_test_levels+1):
         level_path = '../tubeballgame_stuff/easy_24_lvls/' + str(i) + '.lvl'
         level = level_gen.GameLevel()
         
         level.load_from_disk(level_path)
         
-        run_res = run_test(mynet, level)
+
+        verbose = False
+        if i in [79,82]:
+            print (f"\n\n\n\n-------------\n\nModel {model_file_path} Level {level_path} \n{i}\n\n")
+            verbose = True
+        run_res = run_test(mynet, level, verbose)
         if run_res == -1:
             fail_cnt += 1
+            print (f"fail at {i} {model_file_path} {level_path}\n\n\n\n\n")
+
         else:
             pass_cnt += 1
             xtra_move_cnt += run_res
 
-        print(f"pass {pass_cnt}  fail {fail_cnt}")
+    #print(f"pass {pass_cnt}  fail {fail_cnt}")
 
     pass_perc = int(100 * pass_cnt / num_test_levels)
     #print (f"{pass_perc} perecnt passed!")
@@ -75,13 +81,15 @@ def next_state(state, move):  # move is to,from
     new_tubes[move_to].add_ball(new_tubes[move_from].pop_top())
     return new_tubes
 
-def run_test(model, level):
+def run_test(model, level, verbose=False):
     test_tubes = level.get_tubes()
-    #show_tubes_up(test_tubes, False)
+    if verbose:
+        show_tubes_up(test_tubes, False)
 
     a_star_path = a_star_search(test_tubes, quiet=True)
     a_star_len = len(a_star_path) -1  # -1 because the path includes the initial state
-    #print(f"A star steps to solve: {a_star_len}")
+    if verbose:
+        print(f"A star steps to solve: {a_star_len}")
 
 
 
@@ -96,9 +104,11 @@ def run_test(model, level):
     
         #logits = mynet(T)  # that calls forward because __call__ is coded magic backend
         logits = model(T)  
-        #print(f"{logits=}")
+        if verbose:
+            print(f"{logits=}")
         logits_mv = logits.max(dim=0).values
-        #print(f"{logits_mv=}")
+        if verbose:
+            print(f"{logits_mv=}")
         to_from_logs = logits.argmax()  # do this after training
 
         move_to = to_from_logs // NUM_TUBES
@@ -112,20 +122,31 @@ def run_test(model, level):
         #print(f"{reward=}")
 
         new_state = next_state(test_tubes, to_from)    
-        #show_tubes_up(new_state, False)
+        if verbose:
+            show_tubes_up(new_state, False)
         test_tubes = new_state
             
         if reward == -3:
-            print(f"{to_from=}")
-            show_tubes_up(new_state, False)
-            print (f"Fail. Invalid move in step {steps} best possible is {a_star_len}\n")
+            if verbose:
+                print(f"{to_from=}")
+                print (f"Fail. Invalid move in step {steps} best possible is {a_star_len}\n")
+            #show_tubes_up(new_state, False)
             return -1
             
+
+
         elif reward == 10:
+            if verbose:
+                print (f"You did it! Solved in {steps} steps. (Best possible is {a_star_len})\n\nFIREWORKS\n\n\n")
 
             #print (f"You did it! Solved in {steps} steps. (Best possible is {a_star_len})\n\nFIREWORKS\n\n\n")
             return steps - a_star_len
+            # NO!!! This is a bug!!! will return -1 if it takes one extra step but succeeds.
+            # should return a tuple or just success or fail
 
-    print (f"Fail. Took too long move in step {steps} (Best possible is {a_star_len}\n\n")
+
+
+    if verbose:
+        print (f"Fail. Took too long move in step {steps} (Best possible is {a_star_len})")
     # still here? Failed
     return -1
