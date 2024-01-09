@@ -4,8 +4,7 @@ import level_gen
 import torch
 import deepQlib
 import test_models_lib
-
-
+from typing import Tuple, Optional
 
 NUM_TUBES = 4
 NUM_COLORS = 2
@@ -27,27 +26,32 @@ def run_2x4_tests(model_file_path, show_fails = False):
         
 
         verbose = False
+        #verbose = True
+        
         if i in [79,82]:
+        #if i in [78]:
             print (f"\n\n\n\n-------------\n\nModel {model_file_path} Level {level_path} \n{i}\n\n")
             verbose = True
         run_res = run_test(mynet, level, verbose)
-        if run_res == -1:
+        if run_res[0] == False:
             fail_cnt += 1
-            print (f"fail at {i} {model_file_path} {level_path}\n\n\n\n\n")
+            # print (f"fail at {i} {model_file_path} {level_path}\n\n\n\n\n")
 
         else:
             pass_cnt += 1
-            xtra_move_cnt += run_res
-
-    #print(f"pass {pass_cnt}  fail {fail_cnt}")
+            xtra_move_cnt += run_res[1]
+            if verbose:
+                print (f"pass at {i} {model_file_path} {level_path} xtra: {run_res[1]} tot xtra {xtra_move_cnt}")
 
     pass_perc = int(100 * pass_cnt / num_test_levels)
     #print (f"{pass_perc} perecnt passed!")
     avg_xtra_moves = 0
-    if pass_cnt > 1:
+    if pass_cnt >= 1:
         avg_xtra_moves = xtra_move_cnt / pass_cnt # round this to 2 decimal places
         avg_xtra_moves = round(avg_xtra_moves, 2)
-    #    print (f"{xtra_move_cnt} above optimal (lower is better)")
+        print (f"{xtra_move_cnt} above optimal (lower is better)")
+    else:
+        print (f"all {fail_cnt} failed")
     
     return (pass_perc, avg_xtra_moves)
 
@@ -81,22 +85,26 @@ def next_state(state, move):  # move is to,from
     new_tubes[move_to].add_ball(new_tubes[move_from].pop_top())
     return new_tubes
 
-def run_test(model, level, verbose=False):
+def run_test(model, level, verbose=False) -> Tuple[bool, Optional[int]]:
+    # returns (success, extra_moves) extra_moves is None if failed
     test_tubes = level.get_tubes()
     if verbose:
+        print (f"\n-----------------\n new test level {level=} \n ")
         show_tubes_up(test_tubes, False)
+        print("^^^^ initial state ^^^^\n\n")
 
     a_star_path = a_star_search(test_tubes, quiet=True)
     a_star_len = len(a_star_path) -1  # -1 because the path includes the initial state
+    # no it doesn't??? 
+    #a_star_len = len(a_star_path)
+
     if verbose:
         print(f"A star steps to solve: {a_star_len}")
-
-
 
     steps = 0
     reward = 0
     while (reward == 0) and steps < 4+ (a_star_len * 2):
-        steps += 1
+        steps += 1 
         #print ("Step ", steps)
         net_input = level_gen.tubes_to_list(test_tubes, NUM_TUBES)  
         T = tube_list_to_tensor(net_input)
@@ -123,6 +131,7 @@ def run_test(model, level, verbose=False):
 
         new_state = next_state(test_tubes, to_from)    
         if verbose:
+            print (f"after step {steps=}")
             show_tubes_up(new_state, False)
         test_tubes = new_state
             
@@ -130,23 +139,14 @@ def run_test(model, level, verbose=False):
             if verbose:
                 print(f"{to_from=}")
                 print (f"Fail. Invalid move in step {steps} best possible is {a_star_len}\n")
-            #show_tubes_up(new_state, False)
-            return -1
-            
-
+            return False, None
 
         elif reward == 10:
             if verbose:
                 print (f"You did it! Solved in {steps} steps. (Best possible is {a_star_len})\n\nFIREWORKS\n\n\n")
-
-            #print (f"You did it! Solved in {steps} steps. (Best possible is {a_star_len})\n\nFIREWORKS\n\n\n")
-            return steps - a_star_len
-            # NO!!! This is a bug!!! will return -1 if it takes one extra step but succeeds.
-            # should return a tuple or just success or fail
-
-
+            return True, steps - a_star_len
+        
 
     if verbose:
         print (f"Fail. Took too long move in step {steps} (Best possible is {a_star_len})")
-    # still here? Failed
-    return -1
+    return False, None

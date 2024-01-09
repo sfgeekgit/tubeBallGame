@@ -45,11 +45,13 @@ for idx, model_path in enumerate(model_paths):
     #    continue
     #if id_num > 111:
     #    continue
+    if not id_num in [109, 110, 125]:
+        continue
 
 
     #res = lib.run_2x4_tests(model_path)
     res = lib.run_2x4_tests(model_path)
-    print(config_id , res[0])
+    print(f"Net {config_id=} , {res[0]=} \n\n--\n") #  , "  \t", end="")
     
     results[config_id] = res[0]
     extra_moves[config_id] = res[1]
