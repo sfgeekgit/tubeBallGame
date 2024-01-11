@@ -28,10 +28,10 @@ def run_2x4_tests(model_file_path, show_fails = False):
         verbose = False
         #verbose = True
         
-        if i in [79,82]:
-        #if i in [78]:
-            print (f"\n\n\n\n-------------\n\nModel {model_file_path} Level {level_path} \n{i}\n\n")
-            verbose = True
+        #if i in [79,82]:
+        #    print (f"\n\n\n\n-------------\n\nModel {model_file_path} Level {level_path} \n{i}\n\n")
+        #    verbose = True
+        
         run_res = run_test(mynet, level, verbose)
         if run_res[0] == False:
             fail_cnt += 1
@@ -49,7 +49,7 @@ def run_2x4_tests(model_file_path, show_fails = False):
     if pass_cnt >= 1:
         avg_xtra_moves = xtra_move_cnt / pass_cnt # round this to 2 decimal places
         avg_xtra_moves = round(avg_xtra_moves, 2)
-        print (f"{xtra_move_cnt} above optimal (lower is better)")
+        print (f"{xtra_move_cnt} above astar (lower is better)")
     else:
         print (f"all {fail_cnt} failed")
     

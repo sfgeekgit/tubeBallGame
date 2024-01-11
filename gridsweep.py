@@ -10,14 +10,15 @@ wandb.login()
 
 
 #project_name = "try_bayes"
-project_name = "grid2"
+#project_name = "grid2"
+project_name = "grid_5x3e8"
 
 # todo, create dir if it doesn't exist
 
 default_values = {
     #"NUM_EPOCHS": 2000, # will be overwritten by num_runsteps # 2000 == 2e3  # 2e5 == 200,000
     #"NUM_RUNSTEPS": 5e4, # 5e4== 50,000
-    "NUM_RUNSTEPS": 1e7, # 2e7== 20,000,000  
+    "NUM_RUNSTEPS": 1e8, # 2e7== 20,000,000  
     # note! NUM_RUNSTEPS is batch size * num epochs.  
     # NUM_EPOCHS here will be overwritten by NUM_RUNSTEPS / BATCH_SIZE
 
@@ -28,8 +29,10 @@ default_values = {
     "BATCH_SIZE": 20,
     "STEP_BATCH": True,
 
-    "NUM_TUBES"  : 4,
-    "NUM_COLORS" : 2,
+#    "NUM_TUBES"  : 4,
+#    "NUM_COLORS" : 2,
+    "NUM_TUBES"  : 5,
+    "NUM_COLORS" : 3,
 
     #"TRAIN_LEVEL_TYPE":'random',
     #"TRAIN_LEVEL_TYPE":'one_or_two',
@@ -146,21 +149,24 @@ sweep_configuration = {
     "parameters": {
 
         #"DECAY": 0.8,
-        "DECAY": {"values": [0.75,0.8, 0.85]},
+        "DECAY": {"values": [0.85,0.8, 0.75]},
         #"LEARNING_RATE": 1e-3, # 1e-3 == 0.001
         #"BATCH_SIZE": 20,   
         #"BATCH_SIZE": {"values": [16,25,32,40,64,90]},
-        "BATCH_SIZE": {"values": [40,32,25]},
+        "BATCH_SIZE": {"values": [40,32]},
 
-        "WIN_REWARD" : {"values": [100,1000]},
+        #"WIN_REWARD" : {"values": [100,1000]},
+        "WIN_REWARD" : {"values": [1000]},
         
-        "LEARNING_RATE" : {"values": [1e-3, 5e-4] },
+        #"LEARNING_RATE" : {"values": [1e-3, 5e-4] },
 
+        "TRAIN_LEVEL_PARAM": {"values": [10, 15]},
+        
         "NN_SHAPE" : {"values":[
-            ["I", "2I", "4I", "2I" ,"O"],
-            ["I", "3I", "3I", "3I" ,"O"],
             ["I", "4I", "4I", "4I" ,"O"],
             ["I", "2I", "4I",  "I" ,"O"],
+            ["I", "2I", "4I", "2I" ,"O"],
+            ["I", "3I", "3I", "3I" ,"O"],
             ["I",  "I",  "I",  "I" ,"O"]
 
         ]},  

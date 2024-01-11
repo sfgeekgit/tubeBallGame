@@ -19,6 +19,8 @@ from colors import to_colored_ball
 
             
 load_config_file = False    
+project_name = False
+
 if len(sys.argv) == 2:
     try:
         argoneint = int(sys.argv[1])
@@ -39,6 +41,8 @@ if len(sys.argv) >= 3: #  and sys.argv[2] == 'sweep':
             #config_file_path = '../py/wandb_ball_runs/try_bayes/sweep_con_' + sys.argv[1]
             config_file_path = '../py/wandb_ball_runs/' + sys.argv[2] +  '/sweep_con_' + sys.argv[1]
             config_file = config_file_path + '/config.py'
+            project_name = sys.argv[2]
+
 
     except:
         print("error in sweep mode")
@@ -517,7 +521,7 @@ for stepnum in range(NUM_EPOCHS):
     
     if stepnum %300==0:
         percent_done = int(100 * stepnum / NUM_EPOCHS)
-        print(f"{stepnum} of {NUM_EPOCHS} {percent_done}% run {con_num_read} Loss" , loss.item())
+        print(f"{stepnum} of {NUM_EPOCHS} {percent_done}%  {project_name} run {con_num_read} Loss" , loss.item())
         
         if DYN_LEARNING_RATE:
             if stepnum > 50:

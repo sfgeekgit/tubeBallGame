@@ -45,9 +45,6 @@ for idx, model_path in enumerate(model_paths):
     #    continue
     #if id_num > 111:
     #    continue
-    if not id_num in [109, 110, 125]:
-        continue
-
 
     #res = lib.run_2x4_tests(model_path)
     res = lib.run_2x4_tests(model_path)
