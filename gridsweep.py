@@ -11,14 +11,15 @@ wandb.login()
 
 #project_name = "try_bayes"
 #project_name = "grid2"
-project_name = "grid_5x3e8"
+project_name = "grid_5x2e7"
+
 
 # todo, create dir if it doesn't exist
 
 default_values = {
     #"NUM_EPOCHS": 2000, # will be overwritten by num_runsteps # 2000 == 2e3  # 2e5 == 200,000
     #"NUM_RUNSTEPS": 5e4, # 5e4== 50,000
-    "NUM_RUNSTEPS": 1e8, # 2e7== 20,000,000  
+    "NUM_RUNSTEPS": 1e7, # 2e7== 20,000,000  
     # note! NUM_RUNSTEPS is batch size * num epochs.  
     # NUM_EPOCHS here will be overwritten by NUM_RUNSTEPS / BATCH_SIZE
 
@@ -32,7 +33,7 @@ default_values = {
 #    "NUM_TUBES"  : 4,
 #    "NUM_COLORS" : 2,
     "NUM_TUBES"  : 5,
-    "NUM_COLORS" : 3,
+    "NUM_COLORS" : 2,
 
     #"TRAIN_LEVEL_TYPE":'random',
     #"TRAIN_LEVEL_TYPE":'one_or_two',
@@ -116,14 +117,20 @@ def objective(config):
     model_path = f'{dir_path}/model.pth'
     print(f"{model_path=}")
 
+
     print('run the test levels !');    
-    res = lib.run_2x4_tests(model_path)
-    print(f"{res=}")
-    print(f"{res[0]=}")
-    print(f"{res[1]=}")
+    #test_res = lib.run_2x4_tests(model_path)
+    test_res = lib.run_x_tests(model_path, config.NUM_TUBES, config.NUM_COLORS)
 
+    print(f"{test_res=}")
+    print(f"{test_res[0]=}")
+    print(f"{test_res[1]=}")
 
-    score = res[0]
+    print("Hoooray")
+    quit()
+    
+
+    score = test_res[0]
 
     return score
 
@@ -164,9 +171,9 @@ sweep_configuration = {
         
         "NN_SHAPE" : {"values":[
             ["I", "4I", "4I", "4I" ,"O"],
-            ["I", "2I", "4I",  "I" ,"O"],
-            ["I", "2I", "4I", "2I" ,"O"],
             ["I", "3I", "3I", "3I" ,"O"],
+            ["I", "2I", "4I", "2I" ,"O"],
+            ["I", "2I", "4I",  "I" ,"O"],
             ["I",  "I",  "I",  "I" ,"O"]
 
         ]},  

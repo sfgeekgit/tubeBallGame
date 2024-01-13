@@ -11,19 +11,51 @@ NUM_COLORS = 2
 SQUARED_OUTPUT = True
 
 def run_2x4_tests(model_file_path, show_fails = False):
-    mynet = torch.jit.load(model_file_path)
+    #mynet = torch.jit.load(model_file_path)
 
+    num_tubes = 4
+    num_colors = 2
+
+    return run_x_tests(model_file_path, num_tubes, num_colors, show_fails)
+
+def run_x_tests(model_file_path, num_tubes, num_colors, show_fails = False):
+    mynet = torch.jit.load(model_file_path)
     fail_cnt = 0
     pass_cnt = 0
     xtra_move_cnt = 0
 
-    num_test_levels = 100
+    test_lvls_dir = '../tubeballgame_stuff/test_lvls/' + str(num_tubes) + '_' + str(num_colors) 
+
+
+    import glob
+    test_lvl_cnt = len(glob.glob(test_lvls_dir + '/*.lvl'))
+
+
+    #num_test_levels = 100
+    num_test_levels = test_lvl_cnt
+    if not num_test_levels > 0:
+        raise Exception("no test levels found in {test_lvls_dir}")
+
+    
+
+
     for i in range(1,num_test_levels+1):
-        level_path = '../tubeballgame_stuff/easy_24_lvls/' + str(i) + '.lvl'
+        #out_dir = '../tubeballgame_stuff/test_lvls/' + str(num_tubes) + '_' + str(num_colors)
+        #level_path = '../tubeballgame_stuff/easy_24_lvls/' + str(i) + '.lvl'
+        #level_path = '../tubeballgame_stuff/test_lvls/' + str(num_tubes) + '_' + str(num_colors) + '/' + str(i) + '.lvl'
+        level_path = test_lvls_dir + '/' + str(i) + '.lvl'
+
         level = level_gen.GameLevel()
         
         level.load_from_disk(level_path)
         
+        print ("level loaded from disk")
+        print (f"{level_path=}")
+        print (f"{level=} \n\n\n")
+        print (f"{level.get_tubes()=} \n\n\n")
+    
+
+
 
         verbose = False
         #verbose = True
@@ -31,7 +63,7 @@ def run_2x4_tests(model_file_path, show_fails = False):
         #if i in [79,82]:
         #    print (f"\n\n\n\n-------------\n\nModel {model_file_path} Level {level_path} \n{i}\n\n")
         #    verbose = True
-        
+
         run_res = run_test(mynet, level, verbose)
         if run_res[0] == False:
             fail_cnt += 1
@@ -43,15 +75,19 @@ def run_2x4_tests(model_file_path, show_fails = False):
             if verbose:
                 print (f"pass at {i} {model_file_path} {level_path} xtra: {run_res[1]} tot xtra {xtra_move_cnt}")
 
-    pass_perc = int(100 * pass_cnt / num_test_levels)
+    #print (f"pass {pass_cnt} fail {fail_cnt}")
+    pass_perc = 100 * pass_cnt / num_test_levels
+    pass_perc = round(pass_perc, 1)
     #print (f"{pass_perc} perecnt passed!")
     avg_xtra_moves = 0
     if pass_cnt >= 1:
         avg_xtra_moves = xtra_move_cnt / pass_cnt # round this to 2 decimal places
         avg_xtra_moves = round(avg_xtra_moves, 2)
-        print (f"{xtra_move_cnt} above astar (lower is better)")
+        if verbose:
+            print (f"{xtra_move_cnt} above astar (lower is better)")
     else:
-        print (f"all {fail_cnt} failed")
+        if verbose:
+            print (f"all {fail_cnt} failed")        
     
     return (pass_perc, avg_xtra_moves)
 
@@ -88,6 +124,11 @@ def next_state(state, move):  # move is to,from
 def run_test(model, level, verbose=False) -> Tuple[bool, Optional[int]]:
     # returns (success, extra_moves) extra_moves is None if failed
     test_tubes = level.get_tubes()
+
+    print (f"run test on level {level=} ")
+    print(f"{test_tubes=}\n\n\n\n\n")
+
+
     if verbose:
         print (f"\n-----------------\n new test level {level=} \n ")
         show_tubes_up(test_tubes, False)
@@ -106,7 +147,7 @@ def run_test(model, level, verbose=False) -> Tuple[bool, Optional[int]]:
     while (reward == 0) and steps < 4+ (a_star_len * 2):
         steps += 1 
         #print ("Step ", steps)
-        net_input = level_gen.tubes_to_list(test_tubes, NUM_TUBES)  
+        net_input = level_gen.tubes_to_list(test_tubes, len(test_tubes))  
         T = tube_list_to_tensor(net_input)
 
     
