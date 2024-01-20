@@ -94,6 +94,9 @@ class TestTube:
 
 def move_allowed(test_tubes, move_from: int, move_to: int):
   cnt_of_tubes = len(test_tubes)
+  print (f"move_allowed: {move_from=} {move_to=} {cnt_of_tubes=}")
+
+  
   if move_from not in range(cnt_of_tubes):
     return (False, "{} is not in the right range!".format(move_from))
   if move_to not in range(cnt_of_tubes):

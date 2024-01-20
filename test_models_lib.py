@@ -6,8 +6,8 @@ import deepQlib
 import test_models_lib
 from typing import Tuple, Optional
 
-NUM_TUBES = 4
-NUM_COLORS = 2
+NUM_TUBES = 5
+NUM_COLORS = 3
 SQUARED_OUTPUT = True
 
 def run_2x4_tests(model_file_path, show_fails = False):
@@ -49,16 +49,16 @@ def run_x_tests(model_file_path, num_tubes, num_colors, show_fails = False):
         
         level.load_from_disk(level_path)
         
-        print ("level loaded from disk")
-        print (f"{level_path=}")
-        print (f"{level=} \n\n\n")
-        print (f"{level.get_tubes()=} \n\n\n")
+        #print ("level loaded from disk")
+        #print (f"{level_path=}")
+        #print (f"{level=} \n\n\n")
+        #print (f"{level.get_tubes()=} \n\n\n")
     
 
 
 
         verbose = False
-        #verbose = True
+        verbose = True
         
         #if i in [79,82]:
         #    print (f"\n\n\n\n-------------\n\nModel {model_file_path} Level {level_path} \n{i}\n\n")
@@ -93,6 +93,7 @@ def run_x_tests(model_file_path, num_tubes, num_colors, show_fails = False):
 
 def tube_list_to_tensor(tubes):  # this should be in another file...
     dic = {}
+
     for i in range(NUM_COLORS +1):
         dic[i] = [0]*(NUM_COLORS+1)
         dic[i][i] = 1
@@ -125,8 +126,13 @@ def run_test(model, level, verbose=False) -> Tuple[bool, Optional[int]]:
     # returns (success, extra_moves) extra_moves is None if failed
     test_tubes = level.get_tubes()
 
-    print (f"run test on level {level=} ")
-    print(f"{test_tubes=}\n\n\n\n\n")
+    #print (f"run test on level {level=} ")
+    #print(f"{test_tubes=}\n\n\n\n\n")
+
+    global NUM_COLORS
+    # temp
+    NUM_COLORS = 3
+
 
 
     if verbose:
