@@ -52,15 +52,15 @@ if len(sys.argv) >= 3: #  and sys.argv[2] == 'sweep':
 
 # all of these can be overwritten by a config file
 default_values = {
-    "NUM_EPOCHS": 2000,
-    #"NUM_EPOCHS": 2.5e4,
-    "DECAY": 0.8,
+    #"NUM_EPOCHS": 2000,
+    "NUM_EPOCHS": 5.5e4,
+    "DECAY": 0.9,
     "LEARNING_RATE": 1e-3,
     "BATCH_SIZE": 20,
     "STEP_BATCH": True,
 
-    "NUM_TUBES"  : 4,
-    "NUM_COLORS" : 2,
+    "NUM_TUBES"  : 5,
+    "NUM_COLORS" : 3,
 
     #"TRAIN_LEVEL_TYPE":'random',
     #"TRAIN_LEVEL_TYPE":'one_or_two',
@@ -85,9 +85,9 @@ default_values = {
     "STEP_LEARN_RATE"   : False,
 
 
-    "WIN_REWARD" : 100,
+    "WIN_REWARD" : 1000,
 
-    "NN_SHAPE" : ["I", "2I", "2I", "2I" ,"O"]
+    "NN_SHAPE" : ["I", "3I", "3I", "3I" ,"O"]
     
     
 }
@@ -232,7 +232,7 @@ class NeuralNetwork(nn.Module):
 
 
 def reward_f (state, move):   # state is list of tubes, move is tuple {to, from} 
-    
+    verbose = False
     reward = {}
     reward['invalid_move']    = -3
     reward['winning_move']    = WIN_REWARD
@@ -242,32 +242,42 @@ def reward_f (state, move):   # state is list of tubes, move is tuple {to, from}
     move_to    = move[0]
     move_from  = move[1]
 
-    #print("\n\n--\n\n")
-    #show_tubes_up(test_tubes, False)
-    #print("from to", move_from, move_to)
+    if verbose:
+        print("\n\n--\n\n")
+        show_tubes_up(test_tubes, False)
+        print("from to", move_from, move_to)
 
     
     if move_from == move_to:
-        #print ("no way")
+        if verbose:
+            print ("no way")
         return reward['invalid_move']
 
+
     allowed, _ = move_allowed(test_tubes, move_from, move_to)
-    #print("allowed?", allowed)
+    if verbose:
+        print("allowed?", allowed)
     if not allowed:
         return reward['invalid_move']
     
     #if allowed:
     new_tubes = [tt.copy() for tt in test_tubes]
     new_tubes[move_to].add_ball(new_tubes[move_from].pop_top())
-    #print("new tubes")
-    #show_tubes_up(new_tubes, False)
+    if verbose:
+        print("new tubes")
+        show_tubes_up(new_tubes, False)
     
 
     if all(tt.is_complete() or tt.is_empty() for tt in new_tubes):
-        #print ("Winning state!")
+        if verbose:
+            print ("Winning state!")
+            print(f"{reward=}")
+            print(f"{reward['winning_move']}")
+            #quit()
         return reward['winning_move']
 
-    #print("meh")
+    if verbose:
+        print("meh")
     return reward['meh']
 
 

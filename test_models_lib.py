@@ -1,3 +1,4 @@
+import pprint
 from test_tube import TestTube, TUBE_LENGTH, move_allowed, show_tubes_up
 from bfs import breadth_first_search, a_star_search
 import level_gen
@@ -6,8 +7,8 @@ import deepQlib
 import test_models_lib
 from typing import Tuple, Optional
 
-NUM_TUBES = 5
-NUM_COLORS = 3
+#NUM_TUBES = 5
+#NUM_COLORS = 3
 SQUARED_OUTPUT = True
 
 def run_2x4_tests(model_file_path, show_fails = False):
@@ -64,7 +65,7 @@ def run_x_tests(model_file_path, num_tubes, num_colors, show_fails = False):
         #    print (f"\n\n\n\n-------------\n\nModel {model_file_path} Level {level_path} \n{i}\n\n")
         #    verbose = True
 
-        run_res = run_test(mynet, level, verbose)
+        run_res = run_test(mynet, level, num_colors=num_colors, verbose=verbose)
         if run_res[0] == False:
             fail_cnt += 1
             # print (f"fail at {i} {model_file_path} {level_path}\n\n\n\n\n")
@@ -122,17 +123,14 @@ def next_state(state, move):  # move is to,from
     new_tubes[move_to].add_ball(new_tubes[move_from].pop_top())
     return new_tubes
 
-def run_test(model, level, verbose=False) -> Tuple[bool, Optional[int]]:
+def run_test(model, level, num_colors, verbose=False) -> Tuple[bool, Optional[int]]:
     # returns (success, extra_moves) extra_moves is None if failed
     test_tubes = level.get_tubes()
+    NUM_TUBES = len(test_tubes)
 
-    #print (f"run test on level {level=} ")
-    #print(f"{test_tubes=}\n\n\n\n\n")
 
     global NUM_COLORS
-    # temp
-    NUM_COLORS = 3
-
+    NUM_COLORS = num_colors
 
 
     if verbose:
