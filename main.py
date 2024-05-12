@@ -74,8 +74,8 @@ def main():
   #quit()
 
   
-  #solver_solve(test_tubes)
-  player_solve(test_tubes)
+  solver_solve(test_tubes)
+  #player_solve(test_tubes)
 
 if __name__ == '__main__':
   main()

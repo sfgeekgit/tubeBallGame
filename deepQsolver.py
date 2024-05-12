@@ -54,18 +54,19 @@ if len(sys.argv) >= 3: #  and sys.argv[2] == 'sweep':
 default_values = {
     #"NUM_EPOCHS": 2000,
     "NUM_EPOCHS": 5.5e4,
-    "DECAY": 0.9,
+    "DECAY": 0.8,
     "LEARNING_RATE": 1e-3,
-    "BATCH_SIZE": 20,
+    "BATCH_SIZE": 25,
     "STEP_BATCH": True,
 
-    "NUM_TUBES"  : 5,
-    "NUM_COLORS" : 3,
+    "NUM_TUBES"  : 4,
+    "NUM_COLORS" : 2,
 
     #"TRAIN_LEVEL_TYPE":'random',
     #"TRAIN_LEVEL_TYPE":'one_or_two',
     #"TRAIN_LEVEL_TYPE":'load_demo_one_move_rand',
-    "TRAIN_LEVEL_TYPE":'scramble',
+    #"TRAIN_LEVEL_TYPE":'scramble',
+    "TRAIN_LEVEL_TYPE":'scramble8',
     #"TRAIN_LEVEL_TYPE":'scram_ceil',
     "TRAIN_LEVEL_PARAM": 10,
     
@@ -85,7 +86,7 @@ default_values = {
     "STEP_LEARN_RATE"   : False,
 
 
-    "WIN_REWARD" : 1000,
+    "WIN_REWARD" : 100,
 
     "NN_SHAPE" : ["I", "3I", "3I", "3I" ,"O"]
     
